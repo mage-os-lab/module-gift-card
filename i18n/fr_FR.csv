@@ -1,0 +1,16 @@
+Gift Card,Carte cadeau
+Your cart is empty.,Votre panier est vide.
+This gift card code is not valid or has no balance left.,Ce code de carte cadeau n'est pas valide ou n'a plus de solde.
+The gift card was applied.,La carte cadeau a été appliquée.
+The gift card was removed.,La carte cadeau a été retirée.
+Gift cards issued: %1,Cartes cadeaux émises : %1
+The gift card balance has changed. Please review your cart.,Le solde de la carte cadeau a changé. Veuillez vérifier votre panier.
+Apply Gift Card,Appliquer la carte cadeau
+Enter gift card code,Saisissez le code de la carte cadeau
+Remove Gift Card,Retirer la carte cadeau
+Your gift card,Votre carte cadeau
+Thank you for your order #%order_id. Here are your gift card codes:,Merci pour votre commande n° %order_id. Voici vos codes de carte cadeau :
+Enter a code in the cart to use it. Any unused balance stays on the card.,Saisissez un code dans le panier pour l'utiliser. Le solde non utilisé reste sur la carte.
+All variants of a gift card must be virtual products (no weight).,Toutes les variantes d'une carte cadeau doivent être des produits virtuels (sans poids).
+"Only a virtual product, or a configurable product with virtual variants, can be a gift card.","Seul un produit virtuel, ou un produit configurable à variantes virtuelles, peut être une carte cadeau."
+This product is a variant of a gift card: it must stay a virtual product (no weight).,Ce produit est une variante d'une carte cadeau : il doit rester un produit virtuel (sans poids).

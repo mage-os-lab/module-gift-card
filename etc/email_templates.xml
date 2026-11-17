@@ -1,0 +1,6 @@
+<?xml version="1.0"?>
+<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:noNamespaceSchemaLocation="urn:magento:module:Magento_Email:etc/email_templates.xsd">
+    <template id="mageos_giftcard_issued" label="Gift Card Codes" file="issued.html" type="html"
+              module="MageOS_GiftCard" area="frontend"/>
+</config>

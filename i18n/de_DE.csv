@@ -1,0 +1,16 @@
+Gift Card,Geschenkkarte
+Your cart is empty.,Ihr Warenkorb ist leer.
+This gift card code is not valid or has no balance left.,Dieser Geschenkkartencode ist ungültig oder hat kein Guthaben mehr.
+The gift card was applied.,Die Geschenkkarte wurde angewendet.
+The gift card was removed.,Die Geschenkkarte wurde entfernt.
+Gift cards issued: %1,Ausgestellte Geschenkkarten: %1
+The gift card balance has changed. Please review your cart.,Das Guthaben der Geschenkkarte hat sich geändert. Bitte prüfen Sie Ihren Warenkorb.
+Apply Gift Card,Geschenkkarte anwenden
+Enter gift card code,Geschenkkartencode eingeben
+Remove Gift Card,Geschenkkarte entfernen
+Your gift card,Ihre Geschenkkarte
+Thank you for your order #%order_id. Here are your gift card codes:,Vielen Dank für Ihre Bestellung #%order_id. Hier sind Ihre Geschenkkartencodes:
+Enter a code in the cart to use it. Any unused balance stays on the card.,"Geben Sie einen Code im Warenkorb ein, um ihn zu verwenden. Nicht genutztes Guthaben bleibt auf der Karte."
+All variants of a gift card must be virtual products (no weight).,Alle Varianten einer Geschenkkarte müssen virtuelle Produkte sein (ohne Gewicht).
+"Only a virtual product, or a configurable product with virtual variants, can be a gift card.",Nur ein virtuelles Produkt oder ein konfigurierbares Produkt mit virtuellen Varianten kann eine Geschenkkarte sein.
+This product is a variant of a gift card: it must stay a virtual product (no weight).,Dieses Produkt ist eine Variante einer Geschenkkarte: Es muss ein virtuelles Produkt bleiben (ohne Gewicht).

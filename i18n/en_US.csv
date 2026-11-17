@@ -1,0 +1,16 @@
+"Gift Card","Gift Card"
+"Your cart is empty.","Your cart is empty."
+"This gift card code is not valid or has no balance left.","This gift card code is not valid or has no balance left."
+"The gift card was applied.","The gift card was applied."
+"The gift card was removed.","The gift card was removed."
+"Gift cards issued: %1","Gift cards issued: %1"
+"The gift card balance has changed. Please review your cart.","The gift card balance has changed. Please review your cart."
+"Apply Gift Card","Apply Gift Card"
+"Enter gift card code","Enter gift card code"
+"Remove Gift Card","Remove Gift Card"
+"Your gift card","Your gift card"
+"Thank you for your order #%order_id. Here are your gift card codes:","Thank you for your order #%order_id. Here are your gift card codes:"
+"Enter a code in the cart to use it. Any unused balance stays on the card.","Enter a code in the cart to use it. Any unused balance stays on the card."
+All variants of a gift card must be virtual products (no weight).,All variants of a gift card must be virtual products (no weight).
+"Only a virtual product, or a configurable product with virtual variants, can be a gift card.","Only a virtual product, or a configurable product with virtual variants, can be a gift card."
+This product is a variant of a gift card: it must stay a virtual product (no weight).,This product is a variant of a gift card: it must stay a virtual product (no weight).
