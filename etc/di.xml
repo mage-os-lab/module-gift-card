@@ -1,0 +1,28 @@
+<?xml version="1.0"?>
+<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:noNamespaceSchemaLocation="urn:magento:framework:ObjectManager/etc/config.xsd">
+    <type name="Magento\Framework\View\Element\UiComponent\DataProvider\CollectionFactory">
+        <arguments>
+            <argument name="collections" xsi:type="array">
+                <item name="mageos_giftcard_listing_data_source" xsi:type="string">MageOS\GiftCard\Model\ResourceModel\Grid\Collection</item>
+                <item name="mageos_giftcard_history_listing_data_source" xsi:type="string">MageOS\GiftCard\Model\ResourceModel\Grid\HistoryCollection</item>
+            </argument>
+        </arguments>
+    </type>
+    <type name="MageOS\GiftCard\Model\ResourceModel\Grid\Collection">
+        <arguments>
+            <argument name="mainTable" xsi:type="string">mageos_giftcard</argument>
+            <argument name="identifierName" xsi:type="string">giftcard_id</argument>
+        </arguments>
+    </type>
+    <virtualType name="MageOS\GiftCard\Model\ResourceModel\Grid\HistoryCollection"
+                 type="Magento\Framework\View\Element\UiComponent\DataProvider\SearchResult">
+        <arguments>
+            <argument name="mainTable" xsi:type="string">mageos_giftcard_history</argument>
+            <argument name="identifierName" xsi:type="string">history_id</argument>
+        </arguments>
+    </virtualType>
+    <type name="Magento\Quote\Model\Quote\Item\ToOrderItem">
+        <plugin name="mageos_giftcard_copy_gift_options" type="MageOS\GiftCard\Plugin\CopyGiftOptions"/>
+    </type>
+</config>

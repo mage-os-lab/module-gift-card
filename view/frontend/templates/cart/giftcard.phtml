@@ -4,32 +4,41 @@ declare(strict_types=1);
 /** @var \Magento\Checkout\Block\Cart\AbstractCart $block */
 /** @var \Magento\Framework\Escaper $escaper */
 
-$code = (string) $block->getQuote()->getData('giftcard_code');
+$codes = array_filter(explode(',', (string) $block->getQuote()->getData('giftcard_code')));
+$action = $escaper->escapeUrl($block->getUrl('giftcard/cart/apply'));
 ?>
-<details class="block giftcard-form group"<?= $code !== '' ? ' open' : '' ?>>
+<details class="block giftcard-form group"<?= $codes ? ' open' : '' ?>>
     <summary class="title list-none flex justify-between items-center gap-2 py-2 font-semibold">
         <strong class="font-semibold"><?= $escaper->escapeHtml(__('Apply Gift Card')) ?></strong>
     </summary>
-    <form class="mt-2 mb-4" action="<?= $escaper->escapeUrl($block->getUrl('giftcard/cart/apply')) ?>" method="post">
+    <?php if ($codes): ?>
+        <div class="mt-2 space-y-2">
+            <?php foreach ($codes as $code): ?>
+                <div class="field flex justify-between items-center gap-2">
+                    <span><?= $escaper->escapeHtml($code) ?></span>
+                    <form action="<?= /* @noEscape */ $action ?>" method="post">
+                        <?= /* @noEscape */ $block->getBlockHtml('formkey') ?>
+                        <input type="hidden" name="remove" value="<?= $escaper->escapeHtmlAttr($code) ?>">
+                        <button type="submit" class="action action-delete btn btn-secondary"
+                                aria-label="<?= $escaper->escapeHtmlAttr(__('Remove gift card %1', $code)) ?>">
+                            <?= $escaper->escapeHtml(__('Remove')) ?>
+                        </button>
+                    </form>
+                </div>
+            <?php endforeach; ?>
+        </div>
+    <?php endif; ?>
+    <form class="mt-2 mb-4" action="<?= /* @noEscape */ $action ?>" method="post">
         <?= /* @noEscape */ $block->getBlockHtml('formkey') ?>
         <label for="giftcard_code" class="label sr-only">
             <?= $escaper->escapeHtml(__('Enter gift card code')) ?>
         </label>
         <div class="fieldset space-y-2">
             <input type="text" id="giftcard_code" name="giftcard_code" class="input-text form-input w-full"
-                   value="<?= $escaper->escapeHtmlAttr($code) ?>"
-                   placeholder="<?= $escaper->escapeHtmlAttr(__('Enter gift card code')) ?>"
-                   <?= $code !== '' ? 'disabled' : 'required' ?>>
-            <?php if ($code !== ''): ?>
-                <input type="hidden" name="remove" value="1">
-                <button type="submit" class="action primary btn btn-secondary w-full">
-                    <?= $escaper->escapeHtml(__('Remove Gift Card')) ?>
-                </button>
-            <?php else: ?>
-                <button type="submit" class="action primary btn btn-secondary w-full">
-                    <?= $escaper->escapeHtml(__('Apply Gift Card')) ?>
-                </button>
-            <?php endif; ?>
+                   placeholder="<?= $escaper->escapeHtmlAttr(__('Enter gift card code')) ?>" required>
+            <button type="submit" class="action primary btn btn-secondary w-full">
+                <?= $escaper->escapeHtml($codes ? __('Add Another Gift Card') : __('Apply Gift Card')) ?>
+            </button>
         </div>
     </form>
 </details>

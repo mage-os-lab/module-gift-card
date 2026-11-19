@@ -18,6 +18,9 @@ use PHPUnit\Framework\TestCase;
 
 /**
  * Tests that only virtual products, or configurables with virtual variants only, can be gift cards.
+ *
+ * The attribute fixture gets "extension_attributes" null: its default empty array makes core build the wrong
+ * extension class for the attribute interceptor on Mage-OS 4 / PHP 8.5 (TypeError in setExtensionAttributes).
  */
 #[DbIsolation(true)]
 class ValidateProductTest extends TestCase
@@ -26,7 +29,7 @@ class ValidateProductTest extends TestCase
      * A configurable whose variants are all virtual can be flagged.
      */
     #[
-        DataFixture(ConfigurableAttributeFixture::class, as: 'attr'),
+        DataFixture(ConfigurableAttributeFixture::class, ['extension_attributes' => null], 'attr'),
         DataFixture(VirtualFixture::class, as: 'v1'),
         DataFixture(VirtualFixture::class, as: 'v2'),
         DataFixture(ConfigurableFixture::class, ['_options' => ['$attr$'], '_links' => ['$v1$', '$v2$']], 'conf'),
@@ -42,7 +45,7 @@ class ValidateProductTest extends TestCase
      * One variant that needs shipping is enough to refuse the flag.
      */
     #[
-        DataFixture(ConfigurableAttributeFixture::class, as: 'attr'),
+        DataFixture(ConfigurableAttributeFixture::class, ['extension_attributes' => null], 'attr'),
         DataFixture(VirtualFixture::class, as: 'v1'),
         DataFixture(SimpleFixture::class, as: 's1'),
         DataFixture(ConfigurableFixture::class, ['_options' => ['$attr$'], '_links' => ['$v1$', '$s1$']], 'conf'),
@@ -69,7 +72,7 @@ class ValidateProductTest extends TestCase
      * A variant of a gift card cannot become a simple product either.
      */
     #[
-        DataFixture(ConfigurableAttributeFixture::class, as: 'attr'),
+        DataFixture(ConfigurableAttributeFixture::class, ['extension_attributes' => null], 'attr'),
         DataFixture(VirtualFixture::class, as: 'v1'),
         DataFixture(
             ConfigurableFixture::class,

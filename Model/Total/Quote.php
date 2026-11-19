@@ -11,7 +11,11 @@ use Magento\Quote\Model\Quote\Address\Total;
 use Magento\Quote\Model\Quote\Address\Total\AbstractTotal;
 
 /**
- * Pays part or all of the quote with the applied gift card, capped by its balance and the grand total.
+ * Pays part or all of the quote with the applied gift cards, in the order applied, each capped by its balance
+ * and what is left of the grand total. Redeem debits them with the same rule.
+ *
+ * Gift cards in the cart cannot be paid with a gift card: it would extend a card's expiry or turn a goodwill
+ * card into a new one.
  */
 class Quote extends AbstractTotal
 {
@@ -38,10 +42,17 @@ class Quote extends AbstractTotal
         if (!$shippingAssignment->getItems()) {
             return $this;
         }
-        $code = (string) $quote->getData('giftcard_code');
-        $baseAmount = $code === ''
-            ? 0.0
-            : min((float) $this->giftCards->getBalance($code), (float) $total->getBaseGrandTotal());
+        $payable = (float) $total->getBaseGrandTotal();
+        foreach ($quote->getAllVisibleItems() as $item) {
+            if ($item->getProduct()->getData('is_giftcard')) {
+                $payable -= (float) $item->getBaseRowTotalInclTax() - (float) $item->getBaseDiscountAmount();
+            }
+        }
+        $baseAmount = 0.0;
+        foreach (array_filter(explode(',', (string) $quote->getData('giftcard_code'))) as $code) {
+            $left = $payable - $baseAmount;
+            $baseAmount += min((float) $this->giftCards->getBalance($code), max($left, 0.0));
+        }
         $amount = min(
             $this->priceCurrency->convertAndRound($baseAmount, $quote->getStore()),
             (float) $total->getGrandTotal()

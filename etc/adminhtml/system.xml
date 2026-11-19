@@ -1,0 +1,21 @@
+<?xml version="1.0"?>
+<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:noNamespaceSchemaLocation="urn:magento:module:Magento_Config:etc/system_file.xsd">
+    <system>
+        <section id="mageos_giftcard" translate="label" sortOrder="910" showInDefault="1" showInWebsite="0"
+                 showInStore="0">
+            <label>Gift Cards</label>
+            <tab>sales</tab>
+            <resource>MageOS_GiftCard::config</resource>
+            <group id="general" translate="label" sortOrder="10" showInDefault="1" showInWebsite="0" showInStore="0">
+                <label>Gift Cards</label>
+                <field id="validity_months" translate="label comment" type="text" sortOrder="10" showInDefault="1"
+                       showInWebsite="0" showInStore="0">
+                    <label>Validity (Months)</label>
+                    <comment>Months a new gift card can be used. Empty: cards never expire. Check the minimum validity your country requires before setting one. Cards already issued keep their expiry.</comment>
+                    <validate>validate-digits validate-zero-or-greater</validate>
+                </field>
+            </group>
+        </section>
+    </system>
+</config>

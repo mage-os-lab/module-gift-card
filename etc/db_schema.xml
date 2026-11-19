@@ -6,6 +6,24 @@
         <column xsi:type="varchar" name="code" length="32" nullable="false" comment="Code"/>
         <column xsi:type="decimal" name="balance" precision="20" scale="4" unsigned="true" nullable="false"
                 default="0" comment="Balance in base currency"/>
+        <column xsi:type="decimal" name="initial_balance" precision="20" scale="4" unsigned="true" nullable="true"
+                comment="Balance when issued, in base currency"/>
+        <column xsi:type="smallint" name="is_active" unsigned="true" nullable="false" default="1"
+                comment="Is active"/>
+        <column xsi:type="int" name="order_id" unsigned="true" nullable="true" comment="Order the card was bought in"/>
+        <column xsi:type="int" name="order_item_id" unsigned="true" nullable="true"
+                comment="Order line the card was bought in"/>
+        <column xsi:type="int" name="customer_id" unsigned="true" nullable="true" comment="Customer who owns the card"/>
+        <column xsi:type="smallint" name="store_id" unsigned="true" nullable="true" comment="Store of the e-mails"/>
+        <column xsi:type="varchar" name="sender_name" length="255" nullable="true" comment="Sender name"/>
+        <column xsi:type="varchar" name="recipient_name" length="255" nullable="true" comment="Recipient name"/>
+        <column xsi:type="varchar" name="recipient_email" length="255" nullable="true" comment="Recipient e-mail"/>
+        <column xsi:type="text" name="message" nullable="true" comment="Gift message"/>
+        <column xsi:type="datetime" name="send_at" nullable="true" comment="When to e-mail the recipient (UTC)"/>
+        <column xsi:type="datetime" name="sent_at" nullable="true" comment="When the recipient was e-mailed (UTC)"/>
+        <column xsi:type="smallint" name="send_attempts" unsigned="true" nullable="false" default="0"
+                comment="Failed e-mails to the recipient"/>
+        <column xsi:type="datetime" name="expires_at" nullable="true" comment="Expiry (UTC), null for none"/>
         <column xsi:type="timestamp" name="created_at" on_update="false" nullable="false" default="CURRENT_TIMESTAMP"
                 comment="Created at"/>
         <constraint xsi:type="primary" referenceId="PRIMARY">
@@ -14,16 +32,48 @@
         <constraint xsi:type="unique" referenceId="MAGEOS_GIFTCARD_CODE">
             <column name="code"/>
         </constraint>
+        <index referenceId="MAGEOS_GIFTCARD_ORDER_ID" indexType="btree">
+            <column name="order_id"/>
+        </index>
+        <index referenceId="MAGEOS_GIFTCARD_CUSTOMER_ID" indexType="btree">
+            <column name="customer_id"/>
+        </index>
+        <index referenceId="MAGEOS_GIFTCARD_SENT_AT_SEND_AT" indexType="btree">
+            <column name="sent_at"/>
+            <column name="send_at"/>
+        </index>
+    </table>
+    <table name="mageos_giftcard_history" resource="default" engine="innodb" comment="Gift card balance changes">
+        <column xsi:type="int" name="history_id" unsigned="true" nullable="false" identity="true" comment="ID"/>
+        <column xsi:type="int" name="giftcard_id" unsigned="true" nullable="false" comment="Gift card ID"/>
+        <column xsi:type="varchar" name="action" length="16" nullable="false" comment="Action"/>
+        <column xsi:type="decimal" name="amount" precision="20" scale="4" nullable="false" default="0"
+                comment="Balance change in base currency"/>
+        <column xsi:type="decimal" name="balance" precision="20" scale="4" nullable="false" default="0"
+                comment="Balance after the change"/>
+        <column xsi:type="varchar" name="order_increment_id" length="50" nullable="true" comment="Order number"/>
+        <column xsi:type="varchar" name="admin_user" length="40" nullable="true" comment="Admin user name"/>
+        <column xsi:type="varchar" name="comment" length="255" nullable="true" comment="Comment"/>
+        <column xsi:type="timestamp" name="created_at" on_update="false" nullable="false" default="CURRENT_TIMESTAMP"
+                comment="Created at"/>
+        <constraint xsi:type="primary" referenceId="PRIMARY">
+            <column name="history_id"/>
+        </constraint>
+        <constraint xsi:type="foreign" referenceId="MAGEOS_GIFTCARD_HISTORY_GIFTCARD_ID_MAGEOS_GIFTCARD_GIFTCARD_ID"
+                    table="mageos_giftcard_history" column="giftcard_id" referenceTable="mageos_giftcard"
+                    referenceColumn="giftcard_id" onDelete="CASCADE"/>
     </table>
     <table name="quote" resource="checkout">
-        <column xsi:type="varchar" name="giftcard_code" length="32" nullable="true" comment="Gift card code"/>
+        <column xsi:type="varchar" name="giftcard_code" length="255" nullable="true"
+                comment="Gift card codes, comma-separated"/>
         <column xsi:type="decimal" name="base_giftcard_amount" precision="20" scale="4" nullable="true"
                 comment="Base gift card amount"/>
         <column xsi:type="decimal" name="giftcard_amount" precision="20" scale="4" nullable="true"
                 comment="Gift card amount"/>
     </table>
     <table name="sales_order" resource="sales">
-        <column xsi:type="varchar" name="giftcard_code" length="32" nullable="true" comment="Gift card code"/>
+        <column xsi:type="varchar" name="giftcard_code" length="255" nullable="true"
+                comment="Gift card codes, comma-separated"/>
         <column xsi:type="decimal" name="base_giftcard_amount" precision="20" scale="4" nullable="true"
                 comment="Base gift card amount"/>
         <column xsi:type="decimal" name="giftcard_amount" precision="20" scale="4" nullable="true"

@@ -4,11 +4,48 @@
             "giftcard_id": true,
             "code": true,
             "balance": true,
-            "created_at": true
+            "initial_balance": true,
+            "is_active": true,
+            "order_id": true,
+            "order_item_id": true,
+            "created_at": true,
+            "customer_id": true,
+            "store_id": true,
+            "sender_name": true,
+            "recipient_name": true,
+            "recipient_email": true,
+            "message": true,
+            "send_at": true,
+            "sent_at": true,
+            "send_attempts": true,
+            "expires_at": true
         },
         "constraint": {
             "PRIMARY": true,
             "MAGEOS_GIFTCARD_CODE": true
+        },
+        "index": {
+            "MAGEOS_GIFTCARD_ORDER_ID": true,
+            "MAGEOS_GIFTCARD_CUSTOMER_ID": true,
+            "MAGEOS_GIFTCARD_SEND_AT": true,
+            "MAGEOS_GIFTCARD_SENT_AT_SEND_AT": true
+        }
+    },
+    "mageos_giftcard_history": {
+        "column": {
+            "history_id": true,
+            "giftcard_id": true,
+            "action": true,
+            "amount": true,
+            "balance": true,
+            "order_increment_id": true,
+            "admin_user": true,
+            "created_at": true,
+            "comment": true
+        },
+        "constraint": {
+            "PRIMARY": true,
+            "MAGEOS_GIFTCARD_HISTORY_GIFTCARD_ID_MAGEOS_GIFTCARD_GIFTCARD_ID": true
         }
     },
     "quote": {

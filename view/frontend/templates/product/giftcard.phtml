@@ -1,0 +1,85 @@
+<?php
+declare(strict_types=1);
+
+use MageOS\GiftCard\Model\Options;
+
+/** @var \Magento\Catalog\Block\Product\View $block */
+/** @var \Magento\Framework\Escaper $escaper */
+/** @var \MageOS\GiftCard\ViewModel\ProductForm $viewModel */
+$viewModel = $block->getData('view_model');
+$product = $block->getProduct();
+if (!$viewModel->isGiftCard($product)) {
+    return;
+}
+$range = $viewModel->getAmountRange($product);
+$lastDate = $viewModel->getLastSendDate($product);
+$fields = [
+    Options::RECIPIENT_NAME => [__('Recipient Name'), 'text', Options::NAME_LENGTH],
+    Options::RECIPIENT_EMAIL => [__('Recipient E-mail'), 'email', 255],
+    Options::SENDER_NAME => [__('Your Name'), 'text', Options::NAME_LENGTH],
+];
+?>
+<div class="giftcard-fields fieldset mb-6 space-y-4">
+    <?php if ($range): ?>
+        <div class="field required">
+            <label class="label block mb-1 font-semibold" for="giftcard-amount">
+                <span><?= $escaper->escapeHtml(__('Amount')) ?></span>
+            </label>
+            <div class="control">
+                <input type="number" id="giftcard-amount" name="<?= /* @noEscape */ Options::AMOUNT ?>"
+                       class="input-text form-input w-full" required step="0.01"
+                       min="<?= (float) $range[0] ?>" max="<?= (float) $range[1] ?>"
+                       aria-describedby="giftcard-amount-note">
+                <p class="note text-sm mt-1" id="giftcard-amount-note">
+                    <?= $escaper->escapeHtml(__('Between %1 and %2.', $range[0], $range[1])) ?>
+                </p>
+            </div>
+        </div>
+    <?php endif; ?>
+    <fieldset class="fieldset space-y-4">
+        <legend class="legend font-semibold mb-2">
+            <span><?= $escaper->escapeHtml(__('Send It as a Gift (Optional)')) ?></span>
+        </legend>
+        <p class="note text-sm">
+            <?= $escaper->escapeHtml(
+                __('We e-mail the code to the recipient on the date you choose. You also receive it.')
+            ) ?>
+        </p>
+        <?php foreach ($fields as $name => [$label, $type, $length]): ?>
+            <div class="field">
+                <label class="label block mb-1" for="<?= /* @noEscape */ $name ?>">
+                    <span><?= $escaper->escapeHtml($label) ?></span>
+                </label>
+                <div class="control">
+                    <input type="<?= /* @noEscape */ $type ?>" id="<?= /* @noEscape */ $name ?>"
+                           name="<?= /* @noEscape */ $name ?>" maxlength="<?= (int) $length ?>"
+                           class="input-text form-input w-full">
+                </div>
+            </div>
+        <?php endforeach; ?>
+        <div class="field">
+            <label class="label block mb-1" for="<?= /* @noEscape */ Options::MESSAGE ?>">
+                <span><?= $escaper->escapeHtml(__('Message')) ?></span>
+            </label>
+            <div class="control">
+                <textarea id="<?= /* @noEscape */ Options::MESSAGE ?>" name="<?= /* @noEscape */ Options::MESSAGE ?>"
+                          maxlength="<?= (int) Options::MESSAGE_LENGTH ?>" rows="3"
+                          class="form-textarea w-full"></textarea>
+            </div>
+        </div>
+        <div class="field">
+            <label class="label block mb-1" for="<?= /* @noEscape */ Options::SEND_DATE ?>">
+                <span><?= $escaper->escapeHtml(__('Send On')) ?></span>
+            </label>
+            <div class="control">
+                <input type="date" id="<?= /* @noEscape */ Options::SEND_DATE ?>"
+                       name="<?= /* @noEscape */ Options::SEND_DATE ?>" class="input-text form-input w-full"
+                       max="<?= $escaper->escapeHtmlAttr($lastDate) ?>"
+                       aria-describedby="giftcard-date-note">
+                <p class="note text-sm mt-1" id="giftcard-date-note">
+                    <?= $escaper->escapeHtml(__('Empty: sent as soon as the order is invoiced.')) ?>
+                </p>
+            </div>
+        </div>
+    </fieldset>
+</div>

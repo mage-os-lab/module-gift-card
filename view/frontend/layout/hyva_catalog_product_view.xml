@@ -1,0 +1,17 @@
+<?xml version="1.0"?>
+<page xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+      xsi:noNamespaceSchemaLocation="urn:magento:framework:View/Layout/etc/page_configuration.xsd">
+    <body>
+        <!-- Hyvä renders every child of the add-to-cart form -->
+        <referenceBlock name="product.info.form">
+            <block class="Magento\Catalog\Block\Product\View" name="product.info.giftcard.hyva"
+                   template="MageOS_GiftCard::product/giftcard.phtml">
+                <arguments>
+                    <argument name="view_model" xsi:type="object">MageOS\GiftCard\ViewModel\ProductForm</argument>
+                </arguments>
+            </block>
+        </referenceBlock>
+        <referenceBlock name="product.info.giftcard" remove="true"/>
+        <referenceBlock name="product.info.giftcard.options" remove="true"/>
+    </body>
+</page>

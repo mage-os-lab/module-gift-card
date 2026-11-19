@@ -5,6 +5,7 @@ namespace MageOS\GiftCard\Test\Unit;
 
 use MageOS\GiftCard\Model\GiftCards;
 use MageOS\GiftCard\Model\Total\Quote as QuoteTotal;
+use Magento\Framework\DataObject;
 use Magento\Framework\Pricing\PriceCurrencyInterface;
 use Magento\Framework\Serialize\Serializer\Json;
 use Magento\Quote\Api\Data\ShippingAssignmentInterface;
@@ -19,35 +20,51 @@ use PHPUnit\Framework\TestCase;
 class QuoteTotalTest extends TestCase
 {
     /**
-     * Balance, grand total => grand total left, amount used.
+     * Balance, grand total, total of the gift card items in the cart => grand total left, amount used.
      *
-     * @return array<string, array{?float, float, float, float}>
+     * @return array<string, array{?float, float, float, float, float}>
      */
     public static function cases(): array
     {
         return [
-            'balance below total' => [30.0, 100.0, 70.0, 30.0],
-            'balance above total' => [150.0, 100.0, 0.0, 100.0],
-            'unknown code' => [null, 100.0, 100.0, 0.0],
+            'balance below total' => [30.0, 100.0, 0.0, 70.0, 30.0],
+            'balance above total' => [150.0, 100.0, 0.0, 0.0, 100.0],
+            'unknown code' => [null, 100.0, 0.0, 100.0, 0.0],
+            'gift card in the cart is not paid by a card' => [150.0, 100.0, 40.0, 40.0, 60.0],
         ];
     }
 
     /**
-     * Grand total and gift card amounts for a balance below, above, or without a valid code.
+     * Grand total and gift card amounts for a balance below, above, without a valid code, or with a gift card
+     * bought in the same cart.
      */
     #[DataProvider('cases')]
-    public function testCollect(?float $balance, float $grandTotal, float $expectedTotal, float $expectedUsed): void
-    {
+    public function testCollect(
+        ?float $balance,
+        float $grandTotal,
+        float $giftItems,
+        float $expectedTotal,
+        float $expectedUsed
+    ): void {
         $giftCards = $this->createStub(GiftCards::class);
         $giftCards->method('getBalance')->willReturn($balance);
         $priceCurrency = $this->createStub(PriceCurrencyInterface::class);
         $priceCurrency->method('convertAndRound')->willReturnArgument(0);
         $assignment = $this->createStub(ShippingAssignmentInterface::class);
-        $assignment->method('getItems')->willReturn(['item']);
+        $items = [new DataObject(['product' => new DataObject(), 'base_row_total_incl_tax' => 60.0])];
+        if ($giftItems > 0) {
+            $items[] = new DataObject([
+                'product' => new DataObject(['is_giftcard' => 1]),
+                'base_row_total_incl_tax' => $giftItems + 5.0,
+                'base_discount_amount' => 5.0,
+            ]);
+        }
+        $assignment->method('getItems')->willReturn($items);
 
         $data = ['giftcard_code' => 'ABC'];
         $quote = $this->createStub(Quote::class);
         $quote->method('getData')->willReturnCallback(fn ($key) => $data[$key] ?? null);
+        $quote->method('getAllVisibleItems')->willReturn($items);
         $quote->method('setData')->willReturnCallback(function ($key, $value) use (&$data, $quote) {
             $data[$key] = $value;
             return $quote;

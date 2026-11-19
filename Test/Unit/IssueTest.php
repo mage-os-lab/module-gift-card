@@ -4,6 +4,7 @@ declare(strict_types=1);
 namespace MageOS\GiftCard\Test\Unit;
 
 use MageOS\GiftCard\Model\GiftCards;
+use MageOS\GiftCard\Model\Options;
 use MageOS\GiftCard\Observer\Issue;
 use Magento\Directory\Model\Currency;
 use Magento\Framework\DataObject;
@@ -30,6 +31,20 @@ class IssueTest extends TestCase
     private int $created = 0;
 
     /**
+     * Balance and columns of each card created, as [balance, card].
+     *
+     * @var array<int, array{float, array<string, mixed>}>
+     */
+    private array $cards = [];
+
+    /**
+     * Order comments written.
+     *
+     * @var array<int, string>
+     */
+    private array $comments = [];
+
+    /**
      * Paying only marks the invoice; the codes come once it is committed, and only once.
      */
     public function testCodesAreCreatedOnceAfterTheInvoiceIsCommitted(): void
@@ -45,6 +60,24 @@ class IssueTest extends TestCase
 
         $issue->execute($this->event('sales_order_invoice_save_commit_after', $invoice));
         $this->assertSame(2, $this->createdCount());
+    }
+
+    /**
+     * A discounted gift card is worth what was paid for it, and each card knows its order line.
+     * The order comment holds only the end of each code.
+     */
+    public function testCardIsWorthWhatWasPaidAndKnowsItsLine(): void
+    {
+        $issue = $this->issue();
+        $invoice = $this->invoice(2, 10.0);
+
+        $issue->execute($this->event('sales_order_invoice_pay', $invoice));
+        $issue->execute($this->event('sales_order_invoice_save_commit_after', $invoice));
+
+        $this->assertSame([20.0, 20.0], array_column($this->cards, 0));
+        $this->assertSame(9, $this->cards[0][1]['order_item_id']);
+        $this->assertStringNotContainsString('CODE1', $this->comments[0]);
+        $this->assertStringContainsString('…ODE1', $this->comments[0]);
     }
 
     /**
@@ -77,9 +110,11 @@ class IssueTest extends TestCase
     private function issue(): Issue
     {
         $giftCards = $this->createStub(GiftCards::class);
-        $giftCards->method('create')->willReturnCallback(function (): string {
+        $giftCards->method('create')->willReturnCallback(function (float $balance, array $card): string {
+            $this->cards[] = [$balance, $card];
             return 'CODE' . (++$this->created);
         });
+        $giftCards->method('mask')->willReturnCallback(fn (string $code) => '…' . substr($code, -4));
         $transportBuilder = $this->createStub(TransportBuilder::class);
         foreach (['setTemplateIdentifier', 'setTemplateOptions', 'setTemplateVars', 'setFromByScope', 'addTo'] as $m) {
             $transportBuilder->method($m)->willReturnSelf();
@@ -89,25 +124,35 @@ class IssueTest extends TestCase
             $giftCards,
             $transportBuilder,
             $this->createStub(LoggerInterface::class),
-            $this->createStub(OrderStatusHistoryRepositoryInterface::class)
+            $this->createStub(OrderStatusHistoryRepositoryInterface::class),
+            $this->createStub(Options::class)
         );
     }
 
     /**
-     * Invoice with one gift card line of the given quantity.
+     * Invoice with one gift card line of the given quantity, 25 a unit before the discount.
      *
      * @param int $qty
+     * @param float $discount on the whole line
      * @return DataObject
      */
-    private function invoice(int $qty): DataObject
+    private function invoice(int $qty, float $discount = 0.0): DataObject
     {
         $currency = $this->createStub(Currency::class);
         $currency->method('formatTxt')->willReturn('€25.00');
         $order = $this->createStub(Order::class);
         $order->method('getBaseCurrency')->willReturn($currency);
-        $order->method('addCommentToStatusHistory')->willReturn($this->createStub(History::class));
-        $orderItem = new DataObject(['product' => new DataObject(['is_giftcard' => 1])]);
-        $item = new DataObject(['order_item' => $orderItem, 'qty' => $qty, 'base_price_incl_tax' => 25.0]);
+        $order->method('addCommentToStatusHistory')->willReturnCallback(function (string $comment): History {
+            $this->comments[] = $comment;
+            return $this->createStub(History::class);
+        });
+        $orderItem = new DataObject(['id' => 9, 'product' => new DataObject(['is_giftcard' => 1])]);
+        $item = new DataObject([
+            'order_item' => $orderItem,
+            'qty' => $qty,
+            'base_row_total_incl_tax' => 25.0 * $qty,
+            'base_discount_amount' => $discount,
+        ]);
         return new class(['order' => $order, 'all_items' => [$item]]) extends DataObject {
             /**
              * @return array<int, DataObject>

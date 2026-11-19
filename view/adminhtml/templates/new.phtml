@@ -1,0 +1,94 @@
+<?php
+declare(strict_types=1);
+
+/** @var \MageOS\GiftCard\Block\Adminhtml\Card $block */
+/** @var \Magento\Framework\Escaper $escaper */
+$fields = [
+    'recipient_name' => [__('Recipient Name'), 'text'],
+    'recipient_email' => [__('Recipient E-mail'), 'email'],
+    'sender_name' => [__('Sender Name'), 'text'],
+];
+?>
+<form action="<?= $escaper->escapeUrl($block->getUrl('*/*/create')) ?>" method="post" class="admin__fieldset">
+    <?= /* @noEscape */ $block->getBlockHtml('formkey') ?>
+    <div class="admin__field _required">
+        <label class="admin__field-label" for="giftcard-amount">
+            <span><?= $escaper->escapeHtml(__('Balance')) ?></span>
+        </label>
+        <div class="admin__field-control">
+            <input class="admin__control-text" type="number" id="giftcard-amount" name="balance" min="0.01"
+                   step="0.01" required>
+            <div class="admin__field-note"><?= $escaper->escapeHtml(__('In base currency.')) ?></div>
+        </div>
+    </div>
+    <div class="admin__field _required">
+        <label class="admin__field-label" for="giftcard-store">
+            <span><?= $escaper->escapeHtml(__('Store View')) ?></span>
+        </label>
+        <div class="admin__field-control">
+            <select class="admin__control-select" id="giftcard-store" name="store_id" required>
+                <?php foreach ($block->getStoreOptions() as $website): ?>
+                    <?php if (is_array($website['value'])): ?>
+                        <optgroup label="<?= $escaper->escapeHtmlAttr($website['label']) ?>">
+                            <?php foreach ($website['value'] as $store): ?>
+                                <option value="<?= (int) $store['value'] ?>">
+                                    <?= $escaper->escapeHtml(trim((string) $store['label'])) ?>
+                                </option>
+                            <?php endforeach; ?>
+                        </optgroup>
+                    <?php endif; ?>
+                <?php endforeach; ?>
+            </select>
+            <div class="admin__field-note">
+                <?= $escaper->escapeHtml(__('Language and sender of the e-mail, and account of the recipient.')) ?>
+            </div>
+        </div>
+    </div>
+    <?php foreach ($fields as $name => [$label, $type]): ?>
+        <div class="admin__field">
+            <label class="admin__field-label" for="giftcard-<?= /* @noEscape */ $name ?>">
+                <span><?= $escaper->escapeHtml($label) ?></span>
+            </label>
+            <div class="admin__field-control">
+                <input class="admin__control-text" type="<?= /* @noEscape */ $type ?>" maxlength="100"
+                       id="giftcard-<?= /* @noEscape */ $name ?>" name="<?= /* @noEscape */ $name ?>">
+            </div>
+        </div>
+    <?php endforeach; ?>
+    <div class="admin__field">
+        <label class="admin__field-label" for="giftcard-message">
+            <span><?= $escaper->escapeHtml(__('Message')) ?></span>
+        </label>
+        <div class="admin__field-control">
+            <textarea class="admin__control-textarea" id="giftcard-message" name="message" rows="3"
+                      maxlength="500"></textarea>
+        </div>
+    </div>
+    <div class="admin__field">
+        <label class="admin__field-label" for="giftcard-send">
+            <span><?= $escaper->escapeHtml(__('Send On')) ?></span>
+        </label>
+        <div class="admin__field-control">
+            <input class="admin__control-text" type="date" id="giftcard-send" name="send_date">
+            <div class="admin__field-note">
+                <?= $escaper->escapeHtml(__('With a recipient e-mail. Empty: sent within a minute.')) ?>
+            </div>
+        </div>
+    </div>
+    <div class="admin__field">
+        <label class="admin__field-label" for="giftcard-expires">
+            <span><?= $escaper->escapeHtml(__('Expires On')) ?></span>
+        </label>
+        <div class="admin__field-control">
+            <input class="admin__control-text" type="date" id="giftcard-expires" name="expires_date">
+            <div class="admin__field-note">
+                <?= $escaper->escapeHtml(__('Empty: the validity set in the configuration.')) ?>
+            </div>
+        </div>
+    </div>
+    <div class="admin__field">
+        <div class="admin__field-control">
+            <button type="submit" class="action-primary"><?= $escaper->escapeHtml(__('Create Gift Card')) ?></button>
+        </div>
+    </div>
+</form>

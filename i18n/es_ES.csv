@@ -7,10 +7,113 @@ Gift cards issued: %1,Tarjetas regalo emitidas: %1
 The gift card balance has changed. Please review your cart.,El saldo de la tarjeta regalo ha cambiado. Revise su carrito.
 Apply Gift Card,Aplicar tarjeta regalo
 Enter gift card code,Introduzca el código de la tarjeta regalo
-Remove Gift Card,Quitar tarjeta regalo
 Your gift card,Su tarjeta regalo
 Thank you for your order #%order_id. Here are your gift card codes:,Gracias por su pedido n.º %order_id. Estos son sus códigos de tarjeta regalo:
 Enter a code in the cart to use it. Any unused balance stays on the card.,Introduzca un código en el carrito para usarlo. El saldo no utilizado permanece en la tarjeta.
 All variants of a gift card must be virtual products (no weight).,Todas las variantes de una tarjeta regalo deben ser productos virtuales (sin peso).
 "Only a virtual product, or a configurable product with virtual variants, can be a gift card.","Solo un producto virtual, o un producto configurable con variantes virtuales, puede ser una tarjeta regalo."
 This product is a variant of a gift card: it must stay a virtual product (no weight).,Este producto es una variante de una tarjeta regalo: debe seguir siendo un producto virtual (sin peso).
+Gift Cards,Tarjetas regalo
+Active,Activa
+Disabled,Desactivada
+Code,Código
+Initial Balance,Saldo inicial
+Balance,Saldo
+Status,Estado
+Order,Pedido
+Created,Creada
+ID,ID
+History,Historial
+Issued,Emitida
+Used in an order,Usada en un pedido
+Refunded,Reembolsada
+Order canceled,Pedido cancelado
+Balance changed,Saldo modificado
+Enabled,Activada
+Gift Card %1,Tarjeta regalo %1
+Back,Volver
+Date,Fecha
+Action,Acción
+Change,Cambio
+Admin User,Usuario admin
+%sender sent you a gift card worth %amount.,%sender te regala una tarjeta regalo de %amount.
+Add Another Gift Card,Añadir otra tarjeta regalo
+Add Gift Card,Añadir tarjeta regalo
+Amount,Importe
+Between %1 and %2.,Entre %1 y %2.
+Choose a gift card amount between %1 and %2.,Elige un importe de tarjeta regalo entre %1 y %2.
+Choose a send date between today and one year from now.,Elige una fecha de envío entre hoy y dentro de un año.
+Create Gift Card,Crear tarjeta regalo
+Credit memo for order %1,Abono del pedido %1
+"E-mails the code and current balance, with the gift message if any.","Envía por e-mail el código y el saldo actual, con el mensaje de regalo si lo hay."
+Empty: sent as soon as the order is invoiced.,Vacío: se envía en cuanto se factura el pedido.
+Empty: the validity set in the configuration.,Vacío: la validez definida en la configuración.
+Enter a balance greater than 0.,Introduce un saldo mayor que 0.
+Enter a code in the cart to pay for all or part of an order.,Introduce un código en el carrito para pagar todo o parte de un pedido.
+Enter a valid e-mail address.,Introduce una dirección de e-mail válida.
+Enter the code in the cart to use it. Any unused balance stays on the card.,Introduce el código en el carrito para usarlo. El saldo no utilizado permanece en la tarjeta.
+Enter the date as YYYY-MM-DD.,Introduce la fecha como AAAA-MM-DD.
+Enter the e-mail address of the gift card recipient.,Introduce la dirección de e-mail del destinatario de la tarjeta regalo.
+Expired,Caducada
+Expires,Caduca
+Expires On,Caduca el
+From,De
+Gift Card For,Tarjeta regalo para
+Gift card %1 was created.,Se ha creado la tarjeta regalo %1.
+Gift card %1: the expiry date is not valid.,Tarjeta regalo %1: la fecha de caducidad no es válida.
+"Hello %name,",Hola %name:
+In base currency.,En moneda base.
+"Language and sender of the e-mail, and account of the recipient.","Idioma y remitente del e-mail, y cuenta del destinatario."
+Message,Mensaje
+Months a new gift card can be used. Empty: cards never expire. Check the minimum validity your country requires before setting one. Cards already issued keep their expiry.,Meses durante los que se puede usar una nueva tarjeta regalo. Vacío: las tarjetas nunca caducan. Comprueba la validez mínima que exige tu país antes de definirla. Las tarjetas ya emitidas conservan su caducidad.
+My Gift Cards,Mis tarjetas regalo
+Names are limited to %1 characters.,Los nombres están limitados a %1 caracteres.
+Never,Nunca
+New Gift Card,Nueva tarjeta regalo
+Recipient,Destinatario
+Recipient E-mail,E-mail del destinatario
+Recipient Name,Nombre del destinatario
+Remove,Quitar
+Remove gift card %1,Quitar la tarjeta regalo %1
+Send,Enviar
+Send It as a Gift (Optional),Enviarla como regalo (opcional)
+Send On,Enviar el
+Send the Code To,Enviar el código a
+Sender Name,Nombre del remitente
+Store View,Vista de tienda
+The code was sent to %1.,El código se ha enviado a %1.
+The e-mail could not be sent. See var/log/system.log.,No se ha podido enviar el e-mail. Consulta var/log/system.log.
+The gift card recipient e-mail address is not valid.,La dirección de e-mail del destinatario de la tarjeta regalo no es válida.
+The gift message is limited to %1 characters.,El mensaje de regalo está limitado a %1 caracteres.
+This gift card is already applied.,Esta tarjeta regalo ya está aplicada.
+Use it before %date.,Úsala antes del %date.
+Used up,Agotada
+Validity (Months),Validez (meses)
+We e-mail the code to the recipient on the date you choose. You also receive it.,Enviamos el código por e-mail al destinatario en la fecha que elijas. Tú también lo recibes.
+With a recipient e-mail. Empty: sent within a minute.,Con un e-mail de destinatario. Vacío: se envía en un minuto.
+You can use up to %1 gift cards per order.,Puedes usar hasta %1 tarjetas regalo por pedido.
+You have no gift cards.,No tienes tarjetas regalo.
+You received a gift card,Has recibido una tarjeta regalo
+You received a gift card worth %amount.,Has recibido una tarjeta regalo de %amount.
+Your Name,Tu nombre
+Your code:,Tu código:
+"for %1, e-mailed on %2","para %1, enviada el %2"
+the invoice date,la fecha de factura
+Expiry changed,Caducidad modificada
+Code e-mailed,Código enviado por e-mail
+Comment,Comentario
+Bought In,Comprada en el pedido
+"Change Balance, Status and Expiry","Cambiar saldo, estado y caducidad"
+Codes e-mailed to a recipient show only their last characters here.,Los códigos enviados a un destinatario solo muestran aquí sus últimos caracteres.
+Create Gift Cards,Crear tarjetas regalo
+E-mail Codes,Enviar códigos por correo
+Gift card %1 is disabled: the %2 given back stays on it until it is enabled again.,La tarjeta regalo %1 está desactivada: los %2 devueltos se quedan en ella hasta que se vuelva a activar.
+"Gift card %1 was refunded and disabled, but only %2 of its %3 was left on it.","La tarjeta regalo %1 se ha reembolsado y desactivado, pero solo le quedaban %2 de sus %3."
+Gift cards in your cart cannot be paid with a gift card.,Las tarjetas regalo de su carrito no se pueden pagar con una tarjeta regalo.
+In base currency. Refused if the card was used since this page was loaded.,En moneda base. Se rechaza si la tarjeta se ha usado desde que se cargó esta página.
+Save,Guardar
+Set a gift card minimum amount above 0 and not above the maximum amount.,Indique un importe mínimo de la tarjeta regalo mayor que 0 y no superior al importe máximo.
+"The balance must be a number, 0 or more.","El saldo debe ser un número, 0 o más."
+The balance of gift card %1 changed meanwhile. Check it and try again.,El saldo de la tarjeta regalo %1 ha cambiado mientras tanto. Compruébelo e inténtelo de nuevo.
+The balance was saved.,Se ha guardado el saldo.
+Too many wrong gift card codes. Try again in a few minutes.,Demasiados códigos de tarjeta regalo erróneos. Inténtelo de nuevo dentro de unos minutos.

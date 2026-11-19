@@ -1,0 +1,23 @@
+<?xml version="1.0"?>
+<page xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+      xsi:noNamespaceSchemaLocation="urn:magento:framework:View/Layout/etc/page_configuration.xsd">
+    <body>
+        <!-- Luma: products without options (virtual gift cards) and with options (configurable ones) -->
+        <referenceContainer name="product.info.form.content">
+            <block class="Magento\Catalog\Block\Product\View" name="product.info.giftcard" before="-"
+                   template="MageOS_GiftCard::product/giftcard.phtml">
+                <arguments>
+                    <argument name="view_model" xsi:type="object">MageOS\GiftCard\ViewModel\ProductForm</argument>
+                </arguments>
+            </block>
+        </referenceContainer>
+        <referenceBlock name="product.info.options.wrapper.bottom">
+            <block class="Magento\Catalog\Block\Product\View" name="product.info.giftcard.options" before="-"
+                   template="MageOS_GiftCard::product/giftcard.phtml">
+                <arguments>
+                    <argument name="view_model" xsi:type="object">MageOS\GiftCard\ViewModel\ProductForm</argument>
+                </arguments>
+            </block>
+        </referenceBlock>
+    </body>
+</page>

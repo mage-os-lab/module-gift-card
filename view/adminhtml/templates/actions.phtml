@@ -1,0 +1,56 @@
+<?php
+declare(strict_types=1);
+
+/** @var \MageOS\GiftCard\Block\Adminhtml\Card $block */
+/** @var \Magento\Framework\Escaper $escaper */
+$card = $block->getCard();
+if (!$card) {
+    return;
+}
+$balance = sprintf('%.4F', (float) $card['balance']);
+?>
+<?php if ($block->isAllowed('MageOS_GiftCard::cards_edit')): ?>
+    <form action="<?= $escaper->escapeUrl($block->getUrl('*/*/balance')) ?>" method="post"
+          class="admin__fieldset">
+        <?= /* @noEscape */ $block->getBlockHtml('formkey') ?>
+        <input type="hidden" name="giftcard_id" value="<?= (int) $card['giftcard_id'] ?>">
+        <input type="hidden" name="expected_balance" value="<?= $escaper->escapeHtmlAttr($balance) ?>">
+        <div class="admin__field">
+            <label class="admin__field-label" for="giftcard-balance">
+                <span><?= $escaper->escapeHtml(__('Balance')) ?></span>
+            </label>
+            <div class="admin__field-control">
+                <input class="admin__control-text" type="number" min="0" step="any" id="giftcard-balance"
+                       name="balance" required value="<?= $escaper->escapeHtmlAttr($balance) ?>">
+                <button type="submit" class="action-secondary"><?= $escaper->escapeHtml(__('Save')) ?></button>
+                <div class="admin__field-note">
+                    <?= $escaper->escapeHtml(
+                        __('In base currency. Refused if the card was used since this page was loaded.')
+                    ) ?>
+                </div>
+            </div>
+        </div>
+    </form>
+<?php endif ?>
+<?php if ($block->isAllowed('MageOS_GiftCard::cards_resend')): ?>
+    <form action="<?= $escaper->escapeUrl($block->getUrl('*/*/resend')) ?>" method="post"
+          class="admin__fieldset">
+        <?= /* @noEscape */ $block->getBlockHtml('formkey') ?>
+        <input type="hidden" name="giftcard_id" value="<?= (int) $card['giftcard_id'] ?>">
+        <div class="admin__field">
+            <label class="admin__field-label" for="giftcard-resend-email">
+                <span><?= $escaper->escapeHtml(__('Send the Code To')) ?></span>
+            </label>
+            <div class="admin__field-control">
+                <input class="admin__control-text" type="email" id="giftcard-resend-email" name="email" required
+                       value="<?= $escaper->escapeHtmlAttr($block->getDefaultEmail($card)) ?>">
+                <button type="submit" class="action-secondary"><?= $escaper->escapeHtml(__('Send')) ?></button>
+                <div class="admin__field-note">
+                    <?= $escaper->escapeHtml(
+                        __('E-mails the code and current balance, with the gift message if any.')
+                    ) ?>
+                </div>
+            </div>
+        </div>
+    </form>
+<?php endif ?>

@@ -15,7 +15,8 @@ use Magento\Framework\Exception\LocalizedException;
 
 /**
  * Refuses to save a gift card that could need shipping: only virtual products, or configurables whose variants
- * are all virtual, can be gift cards, and a variant of a gift card cannot stop being virtual.
+ * are all virtual, can be gift cards, and a variant of a gift card cannot stop being virtual. A customer-chosen
+ * amount needs a minimum above 0, so that no card is free.
  */
 class ValidateProduct implements ObserverInterface
 {
@@ -59,6 +60,13 @@ class ValidateProduct implements ObserverInterface
             } elseif ($type !== Type::TYPE_VIRTUAL) {
                 throw new LocalizedException(
                     __('Only a virtual product, or a configurable product with virtual variants, can be a gift card.')
+                );
+            }
+            $min = (float) $product->getData('giftcard_amount_min');
+            $max = (float) $product->getData('giftcard_amount_max');
+            if ($max > 0 && ($min <= 0 || $min > $max)) {
+                throw new LocalizedException(
+                    __('Set a gift card minimum amount above 0 and not above the maximum amount.')
                 );
             }
             return;

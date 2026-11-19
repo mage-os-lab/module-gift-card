@@ -3,4 +3,6 @@
         xsi:noNamespaceSchemaLocation="urn:magento:module:Magento_Email:etc/email_templates.xsd">
     <template id="mageos_giftcard_issued" label="Gift Card Codes" file="issued.html" type="html"
               module="MageOS_GiftCard" area="frontend"/>
+    <template id="mageos_giftcard_gift" label="Gift Card for a Recipient" file="gift.html" type="html"
+              module="MageOS_GiftCard" area="frontend"/>
 </config>

@@ -1,0 +1,23 @@
+<!--@subject {{trans "You received a gift card"}} @-->
+<!--@vars {
+"var code":"Gift card code",
+"var amount":"Balance",
+"var sender_name":"Sender name",
+"var recipient_name":"Recipient name",
+"var message|escape|nl2br":"Gift message",
+"var expires":"Expiry date"
+} @-->
+{{template config_path="design/email/header_template"}}
+
+{{depend recipient_name}}<p>{{trans "Hello %name," name=$recipient_name}}</p>{{/depend}}
+{{if sender_name}}
+<p>{{trans "%sender sent you a gift card worth %amount." sender=$sender_name amount=$amount}}</p>
+{{else}}
+<p>{{trans "You received a gift card worth %amount." amount=$amount}}</p>
+{{/if}}
+{{depend message}}<blockquote>{{var message|escape|nl2br}}</blockquote>{{/depend}}
+<p>{{trans "Your code:"}} <strong>{{var code}}</strong></p>
+{{depend expires}}<p>{{trans "Use it before %date." date=$expires}}</p>{{/depend}}
+<p>{{trans "Enter the code in the cart to use it. Any unused balance stays on the card."}}</p>
+
+{{template config_path="design/email/footer_template"}}

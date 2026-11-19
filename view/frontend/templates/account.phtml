@@ -1,0 +1,43 @@
+<?php
+declare(strict_types=1);
+
+/** @var \Magento\Framework\View\Element\Template $block */
+/** @var \Magento\Framework\Escaper $escaper */
+/** @var \MageOS\GiftCard\ViewModel\Account $viewModel */
+$viewModel = $block->getData('view_model');
+$cards = $viewModel->getCards();
+?>
+<?php if (!$cards): ?>
+    <p class="message info empty mb-4"><span><?= $escaper->escapeHtml(__('You have no gift cards.')) ?></span></p>
+<?php else: ?>
+    <p class="mb-4">
+        <?= $escaper->escapeHtml(__('Enter a code in the cart to pay for all or part of an order.')) ?>
+    </p>
+    <div class="table-wrapper overflow-x-auto">
+        <table class="data table w-full">
+            <caption class="sr-only"><?= $escaper->escapeHtml(__('My Gift Cards')) ?></caption>
+            <thead>
+                <tr>
+                    <th scope="col" class="text-left py-2"><?= $escaper->escapeHtml(__('Code')) ?></th>
+                    <th scope="col" class="text-left py-2"><?= $escaper->escapeHtml(__('Balance')) ?></th>
+                    <th scope="col" class="text-left py-2"><?= $escaper->escapeHtml(__('Status')) ?></th>
+                    <th scope="col" class="text-left py-2"><?= $escaper->escapeHtml(__('Expires')) ?></th>
+                </tr>
+            </thead>
+            <tbody>
+                <?php foreach ($cards as $card): ?>
+                    <tr>
+                        <td class="py-2 font-mono"><?= $escaper->escapeHtml($viewModel->getCode($card)) ?></td>
+                        <td class="py-2"><?= $escaper->escapeHtml($viewModel->getBalance($card)) ?></td>
+                        <td class="py-2"><?= $escaper->escapeHtml($viewModel->getStatus($card)) ?></td>
+                        <td class="py-2">
+                            <?= $escaper->escapeHtml($card['expires_at']
+                                ? $block->formatDate($card['expires_at'], \IntlDateFormatter::MEDIUM)
+                                : __('Never')) ?>
+                        </td>
+                    </tr>
+                <?php endforeach; ?>
+            </tbody>
+        </table>
+    </div>
+<?php endif; ?>

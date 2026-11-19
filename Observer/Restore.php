@@ -20,7 +20,12 @@ class Restore implements ObserverInterface
     }
 
     /**
-     * @inheritdoc
+     * With several cards, the last one used is refilled first, each up to what the order took from it
+     * (from the card history). On a cancellation or credit memo a single card gets the whole amount, so orders
+     * placed before 1.1.0 keep working; a failed checkout only gives back what the history shows was debited.
+     * Money put back on a disabled card is noted on the order for the merchant.
+     *
+     * @param Observer $observer
      */
     public function execute(Observer $observer): void
     {
@@ -34,8 +39,23 @@ class Restore implements ObserverInterface
                 $amount -= $invoice->isCanceled() ? 0 : (float) $invoice->getData('base_giftcard_amount');
             }
         }
-        if ($amount > 0 && $order->getData('giftcard_code')) {
-            $this->giftCards->credit((string) $order->getData('giftcard_code'), $amount);
+        $codes = array_filter(explode(',', (string) $order->getData('giftcard_code')));
+        $number = (string) $order->getIncrementId();
+        $action = $creditmemo ? GiftCards::REFUNDED : GiftCards::CANCELED;
+        foreach (array_reverse($codes) as $code) {
+            $credit = count($codes) === 1 && !$observer->getData('quote')
+                ? $amount
+                : min($amount, $this->giftCards->getUsedByOrder($code, $number));
+            if ($credit > 0) {
+                if (!$this->giftCards->credit($code, $credit, $number, $action) && $order->getId()) {
+                    $order->addCommentToStatusHistory((string) __(
+                        'Gift card %1 is disabled: the %2 given back stays on it until it is enabled again.',
+                        $this->giftCards->mask($code),
+                        $order->getBaseCurrency()->formatTxt($credit)
+                    ));
+                }
+                $amount -= $credit;
+            }
         }
     }
 }
