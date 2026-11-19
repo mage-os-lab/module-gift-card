@@ -29,7 +29,6 @@ class CopyGiftOptions
      * @param OrderItem $orderItem
      * @param AbstractItem $item
      * @return OrderItem
-     * @SuppressWarnings(PHPMD.UnusedFormalParameter)
      */
     public function afterConvert(ToOrderItem $subject, OrderItem $orderItem, AbstractItem $item)
     {
