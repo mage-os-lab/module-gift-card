@@ -6,6 +6,8 @@ declare(strict_types=1);
 
 $codes = array_filter(explode(',', (string) $block->getQuote()->getData('giftcard_code')));
 $action = $escaper->escapeUrl($block->getUrl('giftcard/cart/apply'));
+// in a checkout (layout argument), Apply comes back to the checkout instead of the cart
+$back = $block->getData('checkout') ? '<input type="hidden" name="checkout" value="1">' : '';
 ?>
 <details class="block giftcard-form group"<?= $codes ? ' open' : '' ?>>
     <summary class="title list-none flex justify-between items-center gap-2 py-2 font-semibold">
@@ -17,7 +19,7 @@ $action = $escaper->escapeUrl($block->getUrl('giftcard/cart/apply'));
                 <div class="field flex justify-between items-center gap-2">
                     <span><?= $escaper->escapeHtml($code) ?></span>
                     <form action="<?= /* @noEscape */ $action ?>" method="post">
-                        <?= /* @noEscape */ $block->getBlockHtml('formkey') ?>
+                        <?= /* @noEscape */ $block->getBlockHtml('formkey') . $back ?>
                         <input type="hidden" name="remove" value="<?= $escaper->escapeHtmlAttr($code) ?>">
                         <button type="submit" class="action action-delete btn btn-secondary"
                                 aria-label="<?= $escaper->escapeHtmlAttr(__('Remove gift card %1', $code)) ?>">
@@ -29,7 +31,7 @@ $action = $escaper->escapeUrl($block->getUrl('giftcard/cart/apply'));
         </div>
     <?php endif; ?>
     <form class="mt-2 mb-4" action="<?= /* @noEscape */ $action ?>" method="post">
-        <?= /* @noEscape */ $block->getBlockHtml('formkey') ?>
+        <?= /* @noEscape */ $block->getBlockHtml('formkey') . $back ?>
         <label for="giftcard_code" class="label sr-only">
             <?= $escaper->escapeHtml(__('Enter gift card code')) ?>
         </label>

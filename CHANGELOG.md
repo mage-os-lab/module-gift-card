@@ -2,6 +2,18 @@
 
 All notable changes to this module are documented here. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and versions follow [Semantic Versioning](https://semver.org/).
 
+## [Unreleased]
+
+### Added
+
+- Hyvä Checkout: gift card line in the price summary, and the *Apply Gift Card* form under it.
+- Loki Checkout: the *Apply Gift Card* form in the sidebar, after the coupon code (the gift card line was already shown).
+- Admin grid: *Customer* column (e-mail of the account that owns the card), optional columns (recipient and sender names, send date, e-mailed date), bookmarks, column chooser and export.
+
+### Changed
+
+- Admin grids show amounts formatted in the base currency.
+
 ## [1.1.0] - 2026-11-19
 
 Upgrade: run `bin/magento setup:upgrade` (new columns, tables and ACL resources) and make sure Magento's cron runs (gift e-mails). The admin roles that should create cards, change them or e-mail codes need the new resources under *Sales > Operations > Gift Cards*.

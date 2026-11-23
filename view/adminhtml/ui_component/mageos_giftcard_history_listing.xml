@@ -62,12 +62,12 @@
                 <label translate="true">Action</label>
             </settings>
         </column>
-        <column name="amount" sortOrder="30">
+        <column name="amount" class="MageOS\GiftCard\Ui\Component\Listing\Column\Balance" sortOrder="30">
             <settings>
                 <label translate="true">Change</label>
             </settings>
         </column>
-        <column name="balance" sortOrder="40">
+        <column name="balance" class="MageOS\GiftCard\Ui\Component\Listing\Column\Balance" sortOrder="40">
             <settings>
                 <label translate="true">Balance</label>
             </settings>

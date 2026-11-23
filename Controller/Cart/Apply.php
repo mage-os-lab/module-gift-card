@@ -15,7 +15,8 @@ use Magento\Quote\Api\CartRepositoryInterface;
 use Magento\Quote\Model\Quote;
 
 /**
- * Adds a gift card code to the cart, or removes one (parameter "remove" holds the code).
+ * Adds a gift card code to the cart, or removes one (parameter "remove" holds the code), then goes back to the
+ * cart, or to the checkout the form was posted from (parameter "checkout").
  *
  * Wrong codes are counted per IP address: after MAX_FAILURES in FAILURE_WINDOW seconds, codes are refused
  * without being looked up, which slows down guessing.
@@ -82,7 +83,11 @@ class Apply implements HttpPostActionInterface
                 }
             }
         }
-        return $this->redirectFactory->create()->setPath('checkout/cart');
+        $redirect = $this->redirectFactory->create();
+        // the form is also shown in Hyvä Checkout and Loki Checkout: go back there, on the same step
+        return $this->request->getParam('checkout')
+            ? $redirect->setRefererOrBaseUrl()
+            : $redirect->setPath('checkout/cart');
     }
 
     /**

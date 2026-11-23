@@ -7,18 +7,18 @@ Gift cards that are sold as regular products and redeemed in the cart.
 - Flag a virtual product, or a configurable product whose variants are all virtual (one variant per amount), with the *Gift Card* attribute. Gift cards never need shipping: the attribute is not offered on other product types, and saving a gift card that would need shipping (a variant with a weight, for example) is refused. When its invoice is paid, one code per unit is created with a balance equal to what the unit was paid (price including tax, less its share of any cart discount), e-mailed to the buyer and recorded as an order comment with only its last characters.
 - Customer-chosen amount: give a virtual gift card a minimum (above 0) and a maximum amount, and the customer types the amount on the product page.
 - Send as a gift: on the product page, the buyer can enter a recipient name and e-mail, their own name, a message and a send date. The recipient receives the code by e-mail on that date (right after the invoice without a date); the buyer's e-mail shows only the end of that code.
-- Customers enter codes in the cart, up to five per order. The amount is deducted after tax, like a means of payment; the remaining balance stays on each card. Gift cards cannot pay for gift cards bought in the same cart. After 10 wrong codes from one IP address, codes are refused for 15 minutes.
+- Customers enter codes in the cart, or in the order summary of Hyvä Checkout and Loki Checkout, up to five per order. The amount is deducted after tax, like a means of payment; the remaining balance stays on each card. Gift cards cannot pay for gift cards bought in the same cart. After 10 wrong codes from one IP address, codes are refused for 15 minutes.
 - The balance is debited atomically when the order is placed, and credited back on order cancellation or credit memo; money given back to an expired card comes with a new validity. Refunding a purchased gift card disables the cards of the refunded line, unspent ones first; a card already partly spent is noted on the order.
 - *My Gift Cards* in the customer account lists the cards of the account, with balance, status and expiry. A card belongs to the logged-in buyer, or for a gift to the account with the recipient's e-mail; a gift shows up there only once e-mailed, with the end of its code (the full code is in the e-mail). There is no public page to look up a code's balance.
 - Optional expiry, after a validity in months set in the configuration.
 - The gift card lines (amount, recipient, message, send date) are shown with the cart item, in the order, invoices and e-mails; the gift card total is shown in cart totals, the checkout summary, order views, the order e-mail and admin invoices / credit memos.
 - *Sales > Operations > Gift Cards* lists every card. Change a card's status or expiry in the grid, create a card (goodwill gesture, contest prize), and see every change of a card's balance in its *History*, where the balance can be changed and the code e-mailed again. Separate ACL resources for viewing, creating, changing and e-mailing cards.
 
-Limitations: no multi-address checkout, amounts chosen in base currency, and no integration with Hyvä Checkout. A card can be spent on every website of the installation, its balance read in the base currency of the website where it is spent: with several websites in different base currencies, or brands that should not share cards, do not sell gift cards on more than one of them.
+Limitations: no multi-address checkout, and amounts chosen in base currency. A card can be spent on every website of the installation, its balance read in the base currency of the website where it is spent: with several websites in different base currencies, or brands that should not share cards, do not sell gift cards on more than one of them.
 
 ## Compatibility
 
-Mage-OS 3.6 and 4.x, and Magento Open Source 2.4.9: all share the Magento 2.4.9 base (`magento/framework` ^103.0.9). PHP 8.3 to 8.5. CI runs the check-extension workflow on the currently supported Mage-OS versions (today Mage-OS 3.6.0 with PHP 8.4; Mage-OS 4.0 joins once the check-extension actions know it); developed on Mage-OS 4.0.0 with PHP 8.5. Storefront: Hyvä default theme (1.5) and Luma; Hyvä Checkout and GraphQL are not supported.
+Mage-OS 3.6 and 4.x, and Magento Open Source 2.4.9: all share the Magento 2.4.9 base (`magento/framework` ^103.0.9). PHP 8.3 to 8.5. CI runs the check-extension workflow on the currently supported Mage-OS versions (today Mage-OS 3.6.0 with PHP 8.4; Mage-OS 4.0 joins once the check-extension actions know it); developed on Mage-OS 4.0.0 with PHP 8.5. Storefront: Hyvä default theme (1.5) and Luma, with their checkout, Hyvä Checkout or Loki Checkout (see [Checkouts](#checkouts)); GraphQL is not supported.
 
 ## Installation
 
@@ -55,7 +55,7 @@ E-mails, sent from the *Sales Representative* identity of the store:
 
 ## Managing gift cards
 
-*Sales > Operations > Gift Cards* shows all cards. Filter by code, balance, status, expiry, recipient, *Bought In* (the order the card was bought in) or date. The orders a card paid for are in its *History*. Click a row to edit its *Status* or *Expires* date in place, then *Save*; select several rows to change them together. A disabled or expired card keeps its balance but cannot be applied in the cart or spent at checkout. Cards issued before version 1.1.0 have no initial balance or order.
+*Sales > Operations > Gift Cards* shows all cards. Filter by code, balance, status, expiry, recipient, *Customer* (the e-mail of the account that owns the card), *Bought In* (the order the card was bought in) or date. *Columns* adds the recipient and sender names, the send date and when the gift was e-mailed; views can be saved as bookmarks, and *Export* downloads the filtered cards as CSV or Excel XML, full codes included. Amounts are in base currency. The orders a card paid for are in its *History*. Click a row to edit its *Status* or *Expires* date in place, then *Save*; select several rows to change them together. A disabled or expired card keeps its balance but cannot be applied in the cart or spent at checkout. Cards issued before version 1.1.0 have no initial balance or order.
 
 ACL resources, under *Sales > Operations > Gift Cards* (which alone gives the grid and the history, read only):
 
@@ -97,6 +97,16 @@ The same cart on Luma, with the gift lines of the item:
 4. Logged-in customers find their cards, and what is left on them, in *My Account > My Gift Cards*.
 
 ![My Gift Cards in the customer account](docs/images/account.png)
+
+## Checkouts
+
+A code applied in the cart is kept through any checkout, and the cards are debited when the order is placed, whatever the checkout.
+
+- **Luma checkout**: the gift card line is in the order summary; codes are entered in the cart.
+- **Hyvä Checkout**: the gift card line is in the price summary, with the *Apply Gift Card* form under it.
+- **Loki Checkout**: the gift card line is in the sidebar totals, with the *Apply Gift Card* form after the coupon code.
+
+In Hyvä Checkout and Loki Checkout the form is the cart's, posted as a plain form: applying or removing a code reloads the checkout, on the same step, with what the customer already filled in. Neither checkout is required by the module, and the integration was written from their layouts without a licensed install to run it on: check it on yours.
 
 On Hyvä, the module's templates use Tailwind classes: rebuild the theme's styles after installing it (the module registers itself for Hyvä's Tailwind compilation).
 
