@@ -18,7 +18,7 @@ class GrandTotalLast
      * Move the grand total to the end when a gift card is applied.
      *
      * @param TotalsConverter $subject
-     * @param array<string, TotalSegmentInterface> $segments by total code
+     * @param array<string,TotalSegmentInterface> $segments by total code
      * @return array<string, TotalSegmentInterface>
      */
     public function afterProcess(TotalsConverter $subject, array $segments): array
