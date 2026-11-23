@@ -20,11 +20,11 @@ Limitations: no multi-address checkout (a code applied in the cart is not deduct
 
 Mage-OS 3.6 and 4.x, and Magento Open Source 2.4.9: all share the Magento 2.4.9 base (`magento/framework` ^103.0.9). PHP 8.3 to 8.5. CI runs the check-extension workflow on the currently supported Mage-OS versions (today Mage-OS 3.6.0 with PHP 8.4; Mage-OS 4.0 joins once the check-extension actions know it); developed on Mage-OS 4.0.0 with PHP 8.5. GraphQL is not supported.
 
-- **Luma** (theme and checkout): supported, run on Mage-OS 4.0.0. Its *Check Out with Multiple Addresses* does not use gift cards.
+- **Luma** (theme and checkout): supported, run in a browser on Mage-OS 4.0.0 (product page with gift fields, cart form and totals, checkout summary and order, *My Gift Cards*). Its *Check Out with Multiple Addresses* does not use gift cards: a code applied in the cart is ignored there, and the orders are placed at their full total.
 - **Hyvä Theme**: supported, run on the Hyvä default theme 1.5. The cart total line follows the default theme's own templates (inline Alpine expressions): it was not run on the Hyvä CSP theme.
 - **Hyvä Checkout**: written from its layouts, not run (no licensed install): check it on yours. See [Checkouts](#checkouts).
 - **Loki Checkout**: supported, run on Loki Checkout 2.8 with the Hyvä default theme. See [Checkouts](#checkouts).
-- **Elasticsuite**: nothing to integrate, not run. The three product attributes are not searchable, filterable or sortable, and the module touches neither search nor product lists; no reindex is needed.
+- **Elasticsuite**: nothing to integrate. The three product attributes are not searchable, filterable or sortable, and the module touches neither search nor product lists; no reindex is needed. Run with Elasticsuite 2.12 as the search engine: gift card products are found by the catalog search.
 
 ## Installation
 

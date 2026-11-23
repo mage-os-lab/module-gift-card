@@ -2,42 +2,48 @@
 
 All notable changes to this module are documented here. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and versions follow [Semantic Versioning](https://semver.org/).
 
-## [Unreleased]
+## [2.0.0] - 2026-11-23
 
-Upgrade: admin roles that must read or export full gift card codes need the resource *Sales > Operations > Gift Cards > See Full Codes and E-mail Them* (formerly *E-mail Codes*); roles that already had it keep it.
+Security and money fixes from a full review of the module: full codes are hidden from admins who only consult the cards, and several ways to get back, or lose, more than was paid are closed.
 
-### Security
-
-- Admin: full codes (grid, export, history page title, creation message) are shown only with the resource *See Full Codes and E-mail Them*. Other roles see the last four characters, find a card by its whole code only, and can no longer sort by code.
-- Wrong codes are counted per cart instead of per IP address: behind a proxy, one visitor could block gift cards for every customer.
-- A credit memo that refunds gift cards the customer already spent is refused, unless its *Adjustment Fee* covers what was spent.
-- Web addresses are refused in the recipient name, sender name and gift message; no card is issued or e-mailed for a line paid 0.
-- An invoice paid twice no longer issues a second set of cards.
-- Codes that are not in the format of the module's codes are refused without a database lookup.
+Upgrade: three behaviours change. Admin roles that must read or export full gift card codes need the resource *Sales > Operations > Gift Cards > See Full Codes and E-mail Them* (formerly *E-mail Codes*; roles that already had it keep it). A credit memo that refunds a gift card the customer already spent is now refused: enter the spent amount as *Adjustment Fee*, or refund fewer units. Money given back to an expired card can be spent for 30 days, no longer for a whole new validity. Also anonymise the gift card code columns in copies of your database (see *Personal data* in the README).
 
 ### Changed
 
-- Money given back to an expired card can be spent for 30 more days, instead of a whole new validity: an order placed and canceled around the expiry renewed the card.
+- Admin: full codes (grid, export, history page title, creation message) are shown only with the resource *See Full Codes and E-mail Them*, the former *E-mail Codes*. Other roles see the last four characters and find a card by typing its whole code; nobody sorts the grid by code any more.
+- Credit memos: refunding a gift card the customer already spent is refused unless the *Adjustment Fee* covers what was spent. It was accepted before, with a comment on the order afterwards.
+- Money given back to an expired card can be spent for 30 more days, instead of a whole new validity.
+- Wrong codes are counted per cart instead of per IP address: 10 wrong codes block the cart for 15 minutes.
+- Web addresses are refused in the recipient name, sender name and gift message.
 - A customer-chosen amount is rounded to cents.
 
 ### Fixed
 
 - Multi-address checkout: a gift card applied in the cart reduced the orders without being debited. Gift cards are no longer deducted there.
-- An order canceled because its payment was denied after review now gives the gift card amount back.
-- The buyer's e-mail with the codes is written entirely in the language of the order's store view; lines about gifts were in the language of the admin who created the invoice.
-- A cancellation or credit memo never gives back more than the order took from a card.
-- A card whose code has only digits was left debited, with an error page, when another card of the same order could no longer pay.
-- *Send the Code To* another address than the recipient's no longer cancels the scheduled gift e-mail, and a failure there no longer counts against its five attempts.
-- The history page of a card whose order was deleted opens again.
-- A checkout error raised after the order was saved no longer gives the gift card amount back while the order stays.
-- Admin: an absurdly large balance is refused with a message instead of an error page.
-- French, Spanish and Italian: the buyer's e-mail reads correctly for a gift sent on the invoice date.
-- The e-mail template names (*Gift Card Codes*, *Gift Card for a Recipient*) are translated in the admin.
+- An order canceled because its payment was denied after review did not give the gift card amount back. It does now.
+- A cancellation or credit memo could give back more than the order took from a card. It is now capped by the card's history.
+- A card whose code has only digits was left debited, with an error page, when another card of the same order could no longer pay. It is given back.
+- A checkout error raised after the order was saved gave the gift card amount back while the order stayed. The card now stays debited, as the order exists.
+- The buyer's e-mail with the codes had its lines about gifts in the language of the admin who created the invoice. It is written entirely in the language of the order's store view.
+- French, Spanish and Italian: the buyer's e-mail read wrongly for a gift sent on the invoice date.
+- *Send the Code To* another address than the recipient's canceled the scheduled gift e-mail, and a failure there counted against its five attempts. Neither happens now.
+- The history page of a card whose order was deleted showed an error. It opens again.
+- Admin: an absurdly large balance gave an error page. It is refused with a message.
+- The e-mail template names (*Gift Card Codes*, *Gift Card for a Recipient*) were not translated in the admin.
+
+### Security
+
+- Admins who could only consult the cards could read and export every full code, which is all it takes to spend a card. See *Changed* and the upgrade note.
+- Behind a proxy, one visitor entering wrong codes could block gift cards for every customer of the shop.
+- An expired card could be renewed again and again through orders placed and then canceled.
+- The gift e-mail could carry links to an address chosen by the buyer, under the shop's name; no card is issued or e-mailed any more for a line paid 0.
+- An invoice paid twice could issue a second set of cards.
+- Gift card codes are stored as they are in three database columns: the README (*Personal data*) lists them, with the personal data the module keeps, so that copies of the database are anonymised.
 
 ### Compatibility
 
-- The README lists the personal data the module stores and the columns to anonymise in database copies.
-- Each storefront target (Luma, Hyvä Theme, Hyvä Checkout, Loki Checkout, Elasticsuite) has its status in the README.
+- The README gives the status of each storefront target. This version was run on Mage-OS 4.0.0: in a browser on Luma (product page, cart, checkout and order, *My Gift Cards*, multi-address checkout), and through Magento's own services with the Hyvä default theme (totals, order placement, cancellation, invoice, credit memo, e-mails). Elasticsuite 2.12 was the search engine and finds gift card products. Not run: Hyvä Checkout (written from its layouts, no licensed install), Loki Checkout again since 1.2.1, and the Hyvä CSP theme.
+- Luma: *Check Out with Multiple Addresses* does not use gift cards.
 - `magento/module-config` is declared as a dependency.
 
 ## [1.2.1] - 2026-11-23
