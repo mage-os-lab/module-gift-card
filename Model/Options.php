@@ -93,6 +93,10 @@ class Options
         if (mb_strlen($name) > self::NAME_LENGTH || mb_strlen($sender) > self::NAME_LENGTH) {
             throw new LocalizedException(__('Names are limited to %1 characters.', self::NAME_LENGTH));
         }
+        if (preg_match('~://|www\.~i', $name . ' ' . $sender . ' ' . $message)) {
+            // the shop e-mails this text to an address the buyer chose: no links, or it is a phishing relay
+            throw new LocalizedException(__('Links are not allowed in the gift card names and message.'));
+        }
         if (mb_strlen($message) > self::MESSAGE_LENGTH) {
             throw new LocalizedException(__('The gift message is limited to %1 characters.', self::MESSAGE_LENGTH));
         }
@@ -148,10 +152,10 @@ class Options
         if (!$this->hasCustomAmount($product)) {
             return null;
         }
-        return min(
+        return round(min(
             max((float) $buyRequest->getData(self::AMOUNT), (float) $product->getData('giftcard_amount_min')),
             (float) $product->getData('giftcard_amount_max')
-        );
+        ), 2);
     }
 
     /**

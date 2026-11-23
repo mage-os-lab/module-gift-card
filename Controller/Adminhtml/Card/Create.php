@@ -48,7 +48,7 @@ class Create extends Action implements HttpPostActionInterface
             Options::SEND_DATE => $request->getParam('send_date'),
         ]);
         try {
-            if (!is_numeric($balance) || (float) $balance <= 0) {
+            if (!is_numeric($balance) || (float) $balance <= 0 || (float) $balance >= 1e12) {
                 throw new LocalizedException(__('Enter a balance greater than 0.'));
             }
             $this->options->validateGift($gift, $storeId);
@@ -78,7 +78,10 @@ class Create extends Action implements HttpPostActionInterface
             null,
             $user instanceof DataObject ? (string) $user->getData('username') : null
         );
-        $this->messageManager->addSuccessMessage(__('Gift card %1 was created.', $code));
+        $this->messageManager->addSuccessMessage(__(
+            'Gift card %1 was created.',
+            $this->_authorization->isAllowed(GiftCards::ACL_CODES) ? $code : $this->giftCards->mask($code)
+        ));
         return $redirect->setPath('*/*/');
     }
 }

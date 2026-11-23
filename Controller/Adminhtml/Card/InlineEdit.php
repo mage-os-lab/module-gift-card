@@ -46,6 +46,9 @@ class InlineEdit extends Action implements HttpPostActionInterface
         $userName = $user instanceof DataObject ? (string) $user->getData('username') : null;
         $messages = [];
         foreach ((array) $this->getRequest()->getParam('items', []) as $id => $row) {
+            if (!is_array($row)) {
+                continue;
+            }
             $data = [];
             if (isset($row['is_active'])) {
                 $data['is_active'] = (bool) $row['is_active'];

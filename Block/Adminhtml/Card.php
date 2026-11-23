@@ -6,6 +6,7 @@ namespace MageOS\GiftCard\Block\Adminhtml;
 use MageOS\GiftCard\Model\GiftCards;
 use Magento\Backend\Block\Template;
 use Magento\Backend\Block\Template\Context;
+use Magento\Framework\Exception\NoSuchEntityException;
 use Magento\Sales\Api\OrderRepositoryInterface;
 use Magento\Store\Model\System\Store;
 
@@ -51,9 +52,13 @@ class Card extends Template
         if ($card['recipient_email']) {
             return (string) $card['recipient_email'];
         }
-        return $card['order_id']
-            ? (string) $this->orderRepository->get((int) $card['order_id'])->getCustomerEmail()
-            : '';
+        try {
+            return $card['order_id']
+                ? (string) $this->orderRepository->get((int) $card['order_id'])->getCustomerEmail()
+                : '';
+        } catch (NoSuchEntityException) {
+            return '';
+        }
     }
 
     /**

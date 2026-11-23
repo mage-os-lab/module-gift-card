@@ -7,18 +7,24 @@ Gift cards that are sold as regular products and redeemed in the cart.
 - Flag a virtual product, or a configurable product whose variants are all virtual (one variant per amount), with the *Gift Card* attribute. Gift cards never need shipping: the attribute is not offered on other product types, and saving a gift card that would need shipping (a variant with a weight, for example) is refused. When its invoice is paid, one code per unit is created with a balance equal to what the unit was paid (price including tax, less its share of any cart discount), e-mailed to the buyer and recorded as an order comment with only its last characters.
 - Customer-chosen amount: give a virtual gift card a minimum (above 0) and a maximum amount, and the customer types the amount on the product page.
 - Send as a gift: on the product page, the buyer can enter a recipient name and e-mail, their own name, a message and a send date. The recipient receives the code by e-mail on that date (right after the invoice without a date); the buyer's e-mail shows only the end of that code.
-- Customers enter codes in the cart, or in the order summary of Hyvä Checkout and Loki Checkout, up to five per order. The amount is deducted after tax, like a means of payment; the remaining balance stays on each card. Gift cards cannot pay for gift cards bought in the same cart. After 10 wrong codes from one IP address, codes are refused for 15 minutes.
-- The balance is debited atomically when the order is placed, and credited back on order cancellation or credit memo; money given back to an expired card comes with a new validity. Refunding a purchased gift card disables the cards of the refunded line, unspent ones first; a card already partly spent is noted on the order.
+- Customers enter codes in the cart, or in the order summary of Hyvä Checkout and Loki Checkout, up to five per order. The amount is deducted after tax, like a means of payment; the remaining balance stays on each card. Gift cards cannot pay for gift cards bought in the same cart. After 10 wrong codes in one cart, codes are refused in that cart for 15 minutes.
+- The balance is debited atomically when the order is placed, and credited back on order cancellation or credit memo; money given back to an expired card can be spent for 30 more days. Refunding a purchased gift card disables the cards of the refunded line, unspent ones first; a card already partly spent is noted on the order.
 - *My Gift Cards* in the customer account lists the cards of the account, with balance, status and expiry. A card belongs to the logged-in buyer, or for a gift to the account with the recipient's e-mail; a gift shows up there only once e-mailed, with the end of its code (the full code is in the e-mail). There is no public page to look up a code's balance.
 - Optional expiry, after a validity in months set in the configuration.
 - The gift card lines (amount, recipient, message, send date) are shown with the cart item, in the order, invoices and e-mails; the gift card total is shown in cart totals, the checkout summary, order views, the order e-mail and admin invoices / credit memos.
 - *Sales > Operations > Gift Cards* lists every card. Change a card's status or expiry in the grid, create a card (goodwill gesture, contest prize), and see every change of a card's balance in its *History*, where the balance can be changed and the code e-mailed again. Separate ACL resources for viewing, creating, changing and e-mailing cards.
 
-Limitations: no multi-address checkout, and amounts chosen in base currency. A card can be spent on every website of the installation, its balance read in the base currency of the website where it is spent: with several websites in different base currencies, or brands that should not share cards, do not sell gift cards on more than one of them.
+Limitations: no multi-address checkout (a code applied in the cart is not deducted there, and the card is not debited), and amounts chosen in base currency. A card can be spent on every website of the installation, its balance read in the base currency of the website where it is spent: with several websites in different base currencies, or brands that should not share cards, do not sell gift cards on more than one of them.
 
 ## Compatibility
 
-Mage-OS 3.6 and 4.x, and Magento Open Source 2.4.9: all share the Magento 2.4.9 base (`magento/framework` ^103.0.9). PHP 8.3 to 8.5. CI runs the check-extension workflow on the currently supported Mage-OS versions (today Mage-OS 3.6.0 with PHP 8.4; Mage-OS 4.0 joins once the check-extension actions know it); developed on Mage-OS 4.0.0 with PHP 8.5. Storefront: Hyvä default theme (1.5) and Luma, with their checkout, Hyvä Checkout or Loki Checkout (see [Checkouts](#checkouts)); GraphQL is not supported.
+Mage-OS 3.6 and 4.x, and Magento Open Source 2.4.9: all share the Magento 2.4.9 base (`magento/framework` ^103.0.9). PHP 8.3 to 8.5. CI runs the check-extension workflow on the currently supported Mage-OS versions (today Mage-OS 3.6.0 with PHP 8.4; Mage-OS 4.0 joins once the check-extension actions know it); developed on Mage-OS 4.0.0 with PHP 8.5. GraphQL is not supported.
+
+- **Luma** (theme and checkout): supported, run on Mage-OS 4.0.0. Its *Check Out with Multiple Addresses* does not use gift cards.
+- **Hyvä Theme**: supported, run on the Hyvä default theme 1.5. The cart total line follows the default theme's own templates (inline Alpine expressions): it was not run on the Hyvä CSP theme.
+- **Hyvä Checkout**: written from its layouts, not run (no licensed install): check it on yours. See [Checkouts](#checkouts).
+- **Loki Checkout**: supported, run on Loki Checkout 2.8 with the Hyvä default theme. See [Checkouts](#checkouts).
+- **Elasticsuite**: nothing to integrate, not run. The three product attributes are not searchable, filterable or sortable, and the module touches neither search nor product lists; no reindex is needed.
 
 ## Installation
 
@@ -61,7 +67,7 @@ ACL resources, under *Sales > Operations > Gift Cards* (which alone gives the gr
 
 - *Create Gift Cards*: *Add Gift Card*.
 - *Change Balance, Status and Expiry*: editing in the grid, and the balance on the history page.
-- *E-mail Codes*: *Send the Code To* on the history page.
+- *See Full Codes and E-mail Them*: full codes in the grid, its export and the history page, and *Send the Code To* on the history page. Without it, an admin sees only the last four characters of each code, and finds a card by typing its whole code in the *Code* filter: a code is all it takes to spend a card, so give this resource only to the roles that need it.
 
 *Add Gift Card* creates a card without an order: balance, store view (language and sender of the e-mail), and optionally a recipient, sender name, message, send date and expiry date. With a recipient e-mail, the card is e-mailed like a gift and belongs to the customer account with that e-mail, if any.
 
@@ -73,7 +79,7 @@ ACL resources, under *Sales > Operations > Gift Cards* (which alone gives the gr
 
 *Balance*, above the history, sets a new balance (a goodwill gesture, a correction). It is refused if the card was used since the page was loaded, so that a payment made meanwhile is not overwritten.
 
-*Send the Code To* e-mails the code and current balance again, to the recipient or buyer by default or to any address typed there (the customer lost the e-mail, or gave a wrong address).
+*Send the Code To* e-mails the code and current balance again, to the recipient or buyer by default or to any address typed there (the customer lost the e-mail, or gave a wrong address). A gift not sent yet still goes to its recipient on its date when the code is sent to another address.
 
 ![Gift card history](docs/images/admin-history.png)
 
@@ -119,14 +125,20 @@ On Hyvä, the module's templates use Tailwind classes: rebuild the theme's style
 - **"This gift card code is not valid or has no balance left"** for a known code: the card is disabled, expired or its balance is 0 in *Sales > Operations > Gift Cards*.
 - **"Choose a gift card amount between …"**: the product has a minimum and maximum amount, and the amount was missing or outside them (for example *Add to Cart* from a category page: open the product page).
 - **A card is missing from *My Gift Cards***: cards issued before 1.1.0, or bought as a guest, belong to no account; a gift goes to the account whose e-mail is the recipient's, in the website of the order, and shows up once e-mailed.
-- **"Too many wrong gift card codes"**: 10 wrong codes were entered from the customer's IP address in the last 15 minutes. It lifts by itself; flushing the cache lifts it at once.
+- **"Too many wrong gift card codes"**: 10 wrong codes were entered in the cart in the last 15 minutes. It lifts by itself; flushing the cache lifts it at once.
 - **"Gift cards in your cart cannot be paid with a gift card"**: the cart contains a gift card product; the applied cards pay only for the rest of the cart.
 - **"The balance of gift card … changed meanwhile"** on the history page: the card was used since the page was loaded. Reload the page and set the balance again.
 - **"Gift card … was refunded and disabled, but only … was left on it"** in an order comment: the refunded card had been spent in part. The customer got back more than was left on the card; decide whether to recover the difference.
 - **"Gift card … is disabled: the … given back stays on it"** in an order comment: a canceled or refunded order gave money back to a disabled card. Enable the card in the grid if the customer should keep it.
+- **"The refunded gift cards were already spent for …"** when creating a credit memo: the gift cards being refunded were used to pay for other orders. Enter that amount as *Adjustment Fee* to refund only what is left on them, or refund fewer units.
+- **"Links are not allowed in the gift card names and message"**: the shop e-mails this text to an address the buyer chose, so web addresses are refused.
 - **"Set a gift card minimum amount above 0"** when saving a product: a maximum amount needs a minimum above 0 and not above the maximum.
 - **"All variants of a gift card must be virtual products"** or **"must stay a virtual product"**: a variant has a weight, which makes it a simple product that needs shipping. Remove the weight (*This item has no weight*).
 - **"Only a virtual product, or a configurable product with virtual variants, can be a gift card"**: a weight was given to a virtual gift card. Set *Gift Card* to No first if the product should become a shipped product.
+
+## Personal data
+
+The module stores the recipient's e-mail address and name, the sender's name and the gift message in `mageos_giftcard`, the addresses codes were e-mailed to in `mageos_giftcard_history.comment`, and the same gift fields in the cart and order item options. Nothing deletes them when a customer account is deleted: include these columns in your erasure and retention procedures. Gift card codes are stored as they are in `mageos_giftcard.code`, `quote.giftcard_code` and `sales_order.giftcard_code`: anonymise the three columns in any copy of the database (staging, developer dumps), or the copy holds spendable codes.
 
 ## More
 

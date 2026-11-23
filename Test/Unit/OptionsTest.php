@@ -52,6 +52,8 @@ class OptionsTest extends TestCase
         return [
             'message without recipient' => [[Options::MESSAGE => 'Hello']],
             'invalid e-mail' => [[Options::RECIPIENT_EMAIL => 'not-an-email']],
+            'link in the message' => [[Options::RECIPIENT_EMAIL => 'a@example.com', Options::MESSAGE => 'www.x.io']],
+            'link in a name' => [[Options::RECIPIENT_EMAIL => 'a@example.com', Options::SENDER_NAME => 'http://x.io']],
             'quoted e-mail with HTML' => [[Options::RECIPIENT_EMAIL => '"<b>x</b>"@example.com']],
             'date in the past' => [[Options::RECIPIENT_EMAIL => 'a@example.com', Options::SEND_DATE => '2020-01-01']],
             'date too far' => [[Options::RECIPIENT_EMAIL => 'a@example.com', Options::SEND_DATE => '2099-01-01']],

@@ -87,7 +87,7 @@ class GiftCardsTest extends TestCase
     }
 
     /**
-     * Money given back to an expired card comes with a new validity, so it can be spent again.
+     * Money given back to an expired card can be spent again, for a grace period.
      */
     #[\Magento\TestFramework\Fixture\Config(GiftCards::XML_VALIDITY, '12')]
     public function testCreditExtendsAnExpiredCard(): void

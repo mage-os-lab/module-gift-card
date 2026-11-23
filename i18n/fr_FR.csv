@@ -98,7 +98,7 @@ You received a gift card worth %amount.,Vous avez reçu une carte cadeau de %amo
 Your Name,Votre nom
 Your code:,Votre code :
 "for %1, e-mailed on %2","pour %1, envoyée le %2"
-the invoice date,la date de facture
+the invoice date,jour de la facture
 Expiry changed,Expiration modifiée
 Code e-mailed,Code envoyé par e-mail
 Comment,Commentaire
@@ -106,7 +106,6 @@ Bought In,Achetée dans la commande
 "Change Balance, Status and Expiry","Modifier le solde, le statut et l'expiration"
 Codes e-mailed to a recipient show only their last characters here.,Les codes envoyés à un destinataire ne montrent ici que leurs derniers caractères.
 Create Gift Cards,Créer des cartes cadeaux
-E-mail Codes,Envoyer les codes par e-mail
 Gift card %1 is disabled: the %2 given back stays on it until it is enabled again.,La carte cadeau %1 est désactivée : les %2 rendus restent dessus jusqu'à sa réactivation.
 "Gift card %1 was refunded and disabled, but only %2 of its %3 was left on it.","La carte cadeau %1 a été remboursée et désactivée, mais il ne restait que %2 sur ses %3."
 Gift cards in your cart cannot be paid with a gift card.,Les cartes cadeaux de votre panier ne peuvent pas être payées avec une carte cadeau.
@@ -119,3 +118,8 @@ The balance was saved.,Le solde a été enregistré.
 Too many wrong gift card codes. Try again in a few minutes.,Trop de codes de carte cadeau erronés. Réessayez dans quelques minutes.
 Customer,Client
 E-mailed,Envoyée par e-mail
+Gift Card Codes,Codes de carte cadeau
+Gift Card for a Recipient,Carte cadeau pour un destinataire
+See Full Codes and E-mail Them,Voir les codes complets et les envoyer par e-mail
+Links are not allowed in the gift card names and message.,Les liens ne sont pas autorisés dans les noms et le message de la carte cadeau.
+"The refunded gift cards were already spent for %1. Enter at least that amount as Adjustment Fee, or refund fewer of them.","Les cartes cadeaux remboursées ont déjà été dépensées à hauteur de %1. Saisissez au moins ce montant en frais d'ajustement, ou remboursez-en moins."

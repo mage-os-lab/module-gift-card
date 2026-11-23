@@ -16,6 +16,9 @@
     <event name="order_cancel_after">
         <observer name="mageos_giftcard_restore" instance="MageOS\GiftCard\Observer\Restore"/>
     </event>
+    <event name="sales_order_save_before">
+        <observer name="mageos_giftcard_restore" instance="MageOS\GiftCard\Observer\Restore"/>
+    </event>
     <event name="sales_order_creditmemo_refund">
         <observer name="mageos_giftcard_restore" instance="MageOS\GiftCard\Observer\Restore"/>
         <observer name="mageos_giftcard_revoke" instance="MageOS\GiftCard\Observer\Revoke"/>

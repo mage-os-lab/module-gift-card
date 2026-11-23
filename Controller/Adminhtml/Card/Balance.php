@@ -34,7 +34,7 @@ class Balance extends Action implements HttpPostActionInterface
         $id = (int) $this->getRequest()->getParam('giftcard_id');
         $balance = $this->getRequest()->getParam('balance');
         $user = $this->_auth->getUser();
-        if (!is_numeric($balance) || (float) $balance < 0) {
+        if (!is_numeric($balance) || (float) $balance < 0 || (float) $balance >= 1e12) {
             $this->messageManager->addErrorMessage(__('The balance must be a number, 0 or more.'));
         } else {
             try {

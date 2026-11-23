@@ -9,7 +9,6 @@ use Magento\Framework\App\Action\HttpPostActionInterface;
 use Magento\Framework\App\CacheInterface;
 use Magento\Framework\App\RequestInterface;
 use Magento\Framework\Controller\Result\RedirectFactory;
-use Magento\Framework\HTTP\PhpEnvironment\RemoteAddress;
 use Magento\Framework\Message\ManagerInterface;
 use Magento\Quote\Api\CartRepositoryInterface;
 use Magento\Quote\Model\Quote;
@@ -18,8 +17,9 @@ use Magento\Quote\Model\Quote;
  * Adds a gift card code to the cart, or removes one (parameter "remove" holds the code), then goes back to the
  * cart, or to the checkout the form was posted from (parameter "checkout").
  *
- * Wrong codes are counted per IP address: after MAX_FAILURES in FAILURE_WINDOW seconds, codes are refused
- * without being looked up, which slows down guessing.
+ * Wrong codes are counted per cart: after MAX_FAILURES in FAILURE_WINDOW seconds, codes are refused without
+ * being looked up. Per cart and not per IP address: behind a proxy all customers can share one address, and
+ * one visitor would lock the others out. Codes are 64 random bits, so the counter is only a second barrier.
  */
 class Apply implements HttpPostActionInterface
 {
@@ -35,7 +35,6 @@ class Apply implements HttpPostActionInterface
      * @param ManagerInterface $messages
      * @param RedirectFactory $redirectFactory
      * @param CacheInterface $cache
-     * @param RemoteAddress $remoteAddress
      */
     public function __construct(
         private readonly RequestInterface $request,
@@ -44,8 +43,7 @@ class Apply implements HttpPostActionInterface
         private readonly GiftCards $giftCards,
         private readonly ManagerInterface $messages,
         private readonly RedirectFactory $redirectFactory,
-        private readonly CacheInterface $cache,
-        private readonly RemoteAddress $remoteAddress
+        private readonly CacheInterface $cache
     ) {
     }
 
@@ -68,10 +66,11 @@ class Apply implements HttpPostActionInterface
             $this->messages->addNoticeMessage(__('This gift card is already applied.'));
         } elseif (count($codes) >= self::MAX_CARDS) {
             $this->messages->addErrorMessage(__('You can use up to %1 gift cards per order.', self::MAX_CARDS));
-        } elseif ($this->failures() >= self::MAX_FAILURES) {
+        } elseif ($this->failures((int) $quote->getId()) >= self::MAX_FAILURES) {
             $this->messages->addErrorMessage(__('Too many wrong gift card codes. Try again in a few minutes.'));
-        } elseif ($code === '' || !$this->giftCards->getBalance($code)) {
-            $this->countFailure();
+        } elseif (!preg_match('/^[0-9A-F]{16}$/', $code) || !$this->giftCards->getBalance($code)) {
+            // the format check also keeps out spellings the database would match to a code already applied
+            $this->countFailure((int) $quote->getId());
             $this->messages->addErrorMessage(__('This gift card code is not valid or has no balance left.'));
         } else {
             $this->save($quote, [...$codes, $code]);
@@ -103,26 +102,27 @@ class Apply implements HttpPostActionInterface
     }
 
     /**
-     * Wrong codes entered from this IP address in the current window.
+     * Wrong codes entered in this cart in the current window.
+     *
+     * @param int $quoteId
      */
-    private function failures(): int
+    private function failures(int $quoteId): int
     {
-        return (int) $this->cache->load($this->failureKey());
+        return (int) $this->cache->load('mageos_giftcard_failures_' . $quoteId);
     }
 
     /**
      * Count one more wrong code; the window starts again with each one.
+     *
+     * @param int $quoteId
      */
-    private function countFailure(): void
+    private function countFailure(int $quoteId): void
     {
-        $this->cache->save((string) ($this->failures() + 1), $this->failureKey(), [], self::FAILURE_WINDOW);
-    }
-
-    /**
-     * Cache key of the failure counter of this IP address.
-     */
-    private function failureKey(): string
-    {
-        return 'mageos_giftcard_failures_' . sha1((string) $this->remoteAddress->getRemoteAddress());
+        $this->cache->save(
+            (string) ($this->failures($quoteId) + 1),
+            'mageos_giftcard_failures_' . $quoteId,
+            [],
+            self::FAILURE_WINDOW
+        );
     }
 }

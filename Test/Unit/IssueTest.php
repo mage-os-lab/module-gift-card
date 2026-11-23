@@ -15,6 +15,7 @@ use Magento\Framework\Mail\TransportInterface;
 use Magento\Sales\Api\OrderStatusHistoryRepositoryInterface;
 use Magento\Sales\Model\Order;
 use Magento\Sales\Model\Order\Status\History;
+use Magento\Store\Model\App\Emulation;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
 
@@ -43,6 +44,21 @@ class IssueTest extends TestCase
      * @var array<int, string>
      */
     private array $comments = [];
+
+    /**
+     * The buyer's e-mail is written in the order's store view, not in the language of the admin who invoices.
+     */
+    public function testBuyerEmailIsWrittenInTheStoreOfTheOrder(): void
+    {
+        $emulation = $this->createMock(Emulation::class);
+        $emulation->expects($this->once())->method('startEnvironmentEmulation')->with(3, 'frontend', true);
+        $emulation->expects($this->once())->method('stopEnvironmentEmulation');
+        $issue = $this->issue($emulation);
+        $invoice = $this->invoice(1);
+
+        $issue->execute($this->event('sales_order_invoice_pay', $invoice));
+        $issue->execute($this->event('sales_order_invoice_save_commit_after', $invoice));
+    }
 
     /**
      * Paying only marks the invoice; the codes come once it is committed, and only once.
@@ -81,6 +97,22 @@ class IssueTest extends TestCase
     }
 
     /**
+     * An invoice paid again creates no second set of cards: never more cards than units invoiced on the line.
+     */
+    public function testInvoicePaidTwiceIssuesNoMoreCardsThanUnitsInvoiced(): void
+    {
+        $issue = $this->issue();
+        $invoice = $this->invoice(2);
+
+        foreach ([1, 2] as $time) {
+            $issue->execute($this->event('sales_order_invoice_pay', $invoice));
+            $issue->execute($this->event('sales_order_invoice_save_commit_after', $invoice));
+        }
+
+        $this->assertSame(2, $this->createdCount());
+    }
+
+    /**
      * Saving an invoice that was not paid in this request creates nothing.
      */
     public function testCommitWithoutPaymentCreatesNothing(): void
@@ -105,15 +137,17 @@ class IssueTest extends TestCase
     /**
      * Issue observer with a fake gift card store and mailer.
      *
+     * @param Emulation|null $emulation
      * @return Issue
      */
-    private function issue(): Issue
+    private function issue(?Emulation $emulation = null): Issue
     {
         $giftCards = $this->createStub(GiftCards::class);
         $giftCards->method('create')->willReturnCallback(function (float $balance, array $card): string {
             $this->cards[] = [$balance, $card];
             return 'CODE' . (++$this->created);
         });
+        $giftCards->method('countByOrderItem')->willReturnCallback(fn (): int => $this->created);
         $giftCards->method('mask')->willReturnCallback(fn (string $code) => '…' . substr($code, -4));
         $transportBuilder = $this->createStub(TransportBuilder::class);
         foreach (['setTemplateIdentifier', 'setTemplateOptions', 'setTemplateVars', 'setFromByScope', 'addTo'] as $m) {
@@ -125,7 +159,8 @@ class IssueTest extends TestCase
             $transportBuilder,
             $this->createStub(LoggerInterface::class),
             $this->createStub(OrderStatusHistoryRepositoryInterface::class),
-            $this->createStub(Options::class)
+            $this->createStub(Options::class),
+            $emulation ?? $this->createStub(Emulation::class)
         );
     }
 
@@ -142,11 +177,16 @@ class IssueTest extends TestCase
         $currency->method('formatTxt')->willReturn('€25.00');
         $order = $this->createStub(Order::class);
         $order->method('getBaseCurrency')->willReturn($currency);
+        $order->method('getStoreId')->willReturn(3);
         $order->method('addCommentToStatusHistory')->willReturnCallback(function (string $comment): History {
             $this->comments[] = $comment;
             return $this->createStub(History::class);
         });
-        $orderItem = new DataObject(['id' => 9, 'product' => new DataObject(['is_giftcard' => 1])]);
+        $orderItem = new DataObject([
+            'id' => 9,
+            'qty_invoiced' => $qty,
+            'product' => new DataObject(['is_giftcard' => 1]),
+        ]);
         $item = new DataObject([
             'order_item' => $orderItem,
             'qty' => $qty,

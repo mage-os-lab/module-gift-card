@@ -2,6 +2,44 @@
 
 All notable changes to this module are documented here. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and versions follow [Semantic Versioning](https://semver.org/).
 
+## [Unreleased]
+
+Upgrade: admin roles that must read or export full gift card codes need the resource *Sales > Operations > Gift Cards > See Full Codes and E-mail Them* (formerly *E-mail Codes*); roles that already had it keep it.
+
+### Security
+
+- Admin: full codes (grid, export, history page title, creation message) are shown only with the resource *See Full Codes and E-mail Them*. Other roles see the last four characters, find a card by its whole code only, and can no longer sort by code.
+- Wrong codes are counted per cart instead of per IP address: behind a proxy, one visitor could block gift cards for every customer.
+- A credit memo that refunds gift cards the customer already spent is refused, unless its *Adjustment Fee* covers what was spent.
+- Web addresses are refused in the recipient name, sender name and gift message; no card is issued or e-mailed for a line paid 0.
+- An invoice paid twice no longer issues a second set of cards.
+- Codes that are not in the format of the module's codes are refused without a database lookup.
+
+### Changed
+
+- Money given back to an expired card can be spent for 30 more days, instead of a whole new validity: an order placed and canceled around the expiry renewed the card.
+- A customer-chosen amount is rounded to cents.
+
+### Fixed
+
+- Multi-address checkout: a gift card applied in the cart reduced the orders without being debited. Gift cards are no longer deducted there.
+- An order canceled because its payment was denied after review now gives the gift card amount back.
+- The buyer's e-mail with the codes is written entirely in the language of the order's store view; lines about gifts were in the language of the admin who created the invoice.
+- A cancellation or credit memo never gives back more than the order took from a card.
+- A card whose code has only digits was left debited, with an error page, when another card of the same order could no longer pay.
+- *Send the Code To* another address than the recipient's no longer cancels the scheduled gift e-mail, and a failure there no longer counts against its five attempts.
+- The history page of a card whose order was deleted opens again.
+- A checkout error raised after the order was saved no longer gives the gift card amount back while the order stays.
+- Admin: an absurdly large balance is refused with a message instead of an error page.
+- French, Spanish and Italian: the buyer's e-mail reads correctly for a gift sent on the invoice date.
+- The e-mail template names (*Gift Card Codes*, *Gift Card for a Recipient*) are translated in the admin.
+
+### Compatibility
+
+- The README lists the personal data the module stores and the columns to anonymise in database copies.
+- Each storefront target (Luma, Hyvä Theme, Hyvä Checkout, Loki Checkout, Elasticsuite) has its status in the README.
+- `magento/module-config` is declared as a dependency.
+
 ## [1.2.1] - 2026-11-23
 
 ### Fixed

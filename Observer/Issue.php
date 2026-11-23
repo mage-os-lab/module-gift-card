@@ -6,11 +6,13 @@ namespace MageOS\GiftCard\Observer;
 use Exception;
 use MageOS\GiftCard\Model\GiftCards;
 use MageOS\GiftCard\Model\Options;
+use Magento\Framework\App\Area;
 use Magento\Framework\Event\Observer;
 use Magento\Framework\Event\ObserverInterface;
 use Magento\Framework\Mail\Template\TransportBuilder;
 use Magento\Sales\Api\OrderStatusHistoryRepositoryInterface;
 use Magento\Sales\Model\Order;
+use Magento\Store\Model\App\Emulation;
 use Psr\Log\LoggerInterface;
 
 /**
@@ -32,13 +34,15 @@ class Issue implements ObserverInterface
      * @param LoggerInterface $logger
      * @param OrderStatusHistoryRepositoryInterface $historyRepository
      * @param Options $options
+     * @param Emulation $emulation
      */
     public function __construct(
         private readonly GiftCards $giftCards,
         private readonly TransportBuilder $transportBuilder,
         private readonly LoggerInterface $logger,
         private readonly OrderStatusHistoryRepositoryInterface $historyRepository,
-        private readonly Options $options
+        private readonly Options $options,
+        private readonly Emulation $emulation
     ) {
     }
 
@@ -47,6 +51,8 @@ class Issue implements ObserverInterface
      *
      * The order comment records the issued cards, codes shortened: the full codes are in the gift card grid.
      * The buyer gets the full code of the cards they keep, and only the end of the ones e-mailed to a recipient.
+     * The e-mail's lines are written in the order's store view: the invoice is often paid from the admin, in
+     * the admin's language.
      *
      * @param Observer $observer
      */
@@ -62,7 +68,7 @@ class Issue implements ObserverInterface
         }
         $invoice->unsetData(self::PENDING);
         $order = $invoice->getOrder();
-        $codes = [];
+        $issued = [];
         $comments = [];
         foreach ($invoice->getAllItems() as $item) {
             $orderItem = $item->getOrderItem();
@@ -71,7 +77,11 @@ class Issue implements ObserverInterface
             }
             $gift = (array) $orderItem->getProductOptionByCode('info_buyRequest');
             $card = $this->card($order, $gift) + ['order_item_id' => (int) $orderItem->getId()];
-            $qty = (int) $item->getQty();
+            // never more cards than units invoiced on the line, should an invoice be paid twice
+            $qty = min(
+                (int) $item->getQty(),
+                (int) $orderItem->getQtyInvoiced() - $this->giftCards->countByOrderItem((int) $orderItem->getId())
+            );
             if ($qty <= 0) {
                 continue;
             }
@@ -79,39 +89,68 @@ class Issue implements ObserverInterface
                 ((float) $item->getBaseRowTotalInclTax() - (float) $item->getBaseDiscountAmount()) / $qty,
                 2
             );
+            if ($balance <= 0) {
+                continue;
+            }
             $amount = $order->getBaseCurrency()->formatTxt($balance);
             for ($i = 0; $i < $qty; $i++) {
                 $code = $this->giftCards->create($balance, $card, (string) $order->getIncrementId());
                 $comments[] = $this->giftCards->mask($code) . ' — ' . $amount;
-                $line = (isset($card['recipient_email']) ? $this->giftCards->mask($code) : $code) . ' — ' . $amount;
-                if (isset($card['recipient_email'])) {
-                    $line .= ' — ' . __(
-                        'for %1, e-mailed on %2',
-                        $card['recipient_email'],
-                        ($gift[Options::SEND_DATE] ?? '') ?: __('the invoice date')
-                    );
-                }
-                $codes[] = $line;
+                $issued[] = [
+                    'code' => $code,
+                    'balance' => $balance,
+                    'recipient' => $card['recipient_email'] ?? null,
+                    'date' => (string) ($gift[Options::SEND_DATE] ?? ''),
+                ];
             }
         }
-        if (!$codes) {
+        if (!$issued) {
             return;
         }
         $this->historyRepository->save(
             $order->addCommentToStatusHistory((string) __('Gift cards issued: %1', implode(', ', $comments)))
         );
+        $this->emulation->startEnvironmentEmulation((int) $order->getStoreId(), Area::AREA_FRONTEND, true);
         try {
             $this->transportBuilder
                 ->setTemplateIdentifier('mageos_giftcard_issued')
                 ->setTemplateOptions(['area' => 'frontend', 'store' => $order->getStoreId()])
-                ->setTemplateVars(['codes' => implode("\n", $codes), 'order_id' => $order->getIncrementId()])
+                ->setTemplateVars([
+                    'codes' => implode("\n", $this->lines($order, $issued)),
+                    'order_id' => $order->getIncrementId(),
+                ])
                 ->setFromByScope('sales', $order->getStoreId())
                 ->addTo($order->getCustomerEmail())
                 ->getTransport()
                 ->sendMessage();
         } catch (Exception $e) {
             $this->logger->error('Gift card e-mail failed for order ' . $order->getIncrementId(), ['exception' => $e]);
+        } finally {
+            $this->emulation->stopEnvironmentEmulation();
         }
+    }
+
+    /**
+     * Lines of the buyer's e-mail, one per card; call it inside the emulation of the order's store view.
+     *
+     * @param Order $order
+     * @param array<int,array<string,mixed>> $issued code, balance, recipient (e-mail or null) and send date
+     * @return string[]
+     */
+    private function lines(Order $order, array $issued): array
+    {
+        $lines = [];
+        foreach ($issued as $card) {
+            $amount = $order->getBaseCurrency()->formatTxt((float) $card['balance']);
+            $lines[] = $card['recipient'] === null
+                ? $card['code'] . ' — ' . $amount
+                : $this->giftCards->mask((string) $card['code']) . ' — ' . $amount . ' — ' . __(
+                    'for %1, e-mailed on %2',
+                    $card['recipient'],
+                    $card['date'] ?: __('the invoice date')
+                );
+        }
+        return $lines;
     }
 
     /**

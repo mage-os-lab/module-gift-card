@@ -22,7 +22,7 @@ class QuoteTotalTest extends TestCase
     /**
      * Balance, grand total, total of the gift card items in the cart => grand total left, amount used.
      *
-     * @return array<string, array{?float, float, float, float, float}>
+     * @return array<string, array{0: ?float, 1: float, 2: float, 3: float, 4: float, 5?: bool}>
      */
     public static function cases(): array
     {
@@ -31,12 +31,13 @@ class QuoteTotalTest extends TestCase
             'balance above total' => [150.0, 100.0, 0.0, 0.0, 100.0],
             'unknown code' => [null, 100.0, 0.0, 100.0, 0.0],
             'gift card in the cart is not paid by a card' => [150.0, 100.0, 40.0, 40.0, 60.0],
+            'multi-address checkout never debits, so nothing is deducted' => [150.0, 100.0, 0.0, 100.0, 0.0, true],
         ];
     }
 
     /**
-     * Grand total and gift card amounts for a balance below, above, without a valid code, or with a gift card
-     * bought in the same cart.
+     * Grand total and gift card amounts for a balance below, above, without a valid code, with a gift card
+     * bought in the same cart, or in the multi-address checkout.
      */
     #[DataProvider('cases')]
     public function testCollect(
@@ -44,7 +45,8 @@ class QuoteTotalTest extends TestCase
         float $grandTotal,
         float $giftItems,
         float $expectedTotal,
-        float $expectedUsed
+        float $expectedUsed,
+        bool $multiShipping = false
     ): void {
         $giftCards = $this->createStub(GiftCards::class);
         $giftCards->method('getBalance')->willReturn($balance);
@@ -65,6 +67,9 @@ class QuoteTotalTest extends TestCase
         $quote = $this->createStub(Quote::class);
         $quote->method('getData')->willReturnCallback(fn ($key) => $data[$key] ?? null);
         $quote->method('getAllVisibleItems')->willReturn($items);
+        $quote->method('__call')->willReturnCallback(
+            fn (string $method) => $method === 'getIsMultiShipping' ? $multiShipping : null
+        );
         $quote->method('setData')->willReturnCallback(function ($key, $value) use (&$data, $quote) {
             $data[$key] = $value;
             return $quote;

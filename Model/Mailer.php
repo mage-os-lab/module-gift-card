@@ -40,6 +40,7 @@ class Mailer
      *
      * Mail failures are logged and counted on the card, not thrown, so that one bad address does not stop
      * the others. The expiry is written in the language and time zone of the card's store view.
+     * Only an e-mail to the card's recipient counts as the gift being sent, or as a failed attempt at it.
      *
      * @param array<string,mixed> $card row of mageos_giftcard
      * @param string|null $email default: the card's recipient
@@ -49,6 +50,7 @@ class Mailer
     public function send(array $card, ?string $email = null, ?string $adminUser = null): bool
     {
         $email = $email ?: (string) $card['recipient_email'];
+        $gift = strcasecmp($email, (string) $card['recipient_email']) === 0;
         try {
             $store = $this->storeManager->getStore((int) $card['store_id'] ?: null);
             $expires = $card['expires_at']
@@ -83,10 +85,12 @@ class Mailer
                 ->sendMessage();
         } catch (Exception $e) {
             $this->logger->error('Gift card e-mail failed for card ' . $card['giftcard_id'], ['exception' => $e]);
-            $this->giftCards->markFailed((int) $card['giftcard_id']);
+            if ($gift) {
+                $this->giftCards->markFailed((int) $card['giftcard_id']);
+            }
             return false;
         }
-        $this->giftCards->markSent((int) $card['giftcard_id'], $email, $adminUser);
+        $this->giftCards->markSent((int) $card['giftcard_id'], $email, $adminUser, $gift);
         return true;
     }
 }

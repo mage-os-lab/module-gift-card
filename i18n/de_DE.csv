@@ -106,7 +106,6 @@ Bought In,Gekauft in Bestellung
 "Change Balance, Status and Expiry","Guthaben, Status und Ablauf ändern"
 Codes e-mailed to a recipient show only their last characters here.,"Codes, die an einen Empfänger gesendet werden, zeigen hier nur ihre letzten Zeichen."
 Create Gift Cards,Geschenkkarten erstellen
-E-mail Codes,Codes per E-Mail senden
 Gift card %1 is disabled: the %2 given back stays on it until it is enabled again.,"Die Geschenkkarte %1 ist deaktiviert: die zurückgegebenen %2 bleiben darauf, bis sie wieder aktiviert wird."
 "Gift card %1 was refunded and disabled, but only %2 of its %3 was left on it.","Die Geschenkkarte %1 wurde erstattet und deaktiviert, aber von ihren %3 waren nur noch %2 übrig."
 Gift cards in your cart cannot be paid with a gift card.,Geschenkkarten in Ihrem Warenkorb können nicht mit einer Geschenkkarte bezahlt werden.
@@ -119,3 +118,8 @@ The balance was saved.,Das Guthaben wurde gespeichert.
 Too many wrong gift card codes. Try again in a few minutes.,Zu viele falsche Geschenkkartencodes. Versuchen Sie es in einigen Minuten erneut.
 Customer,Kunde
 E-mailed,Per E-Mail gesendet
+Gift Card Codes,Geschenkkartencodes
+Gift Card for a Recipient,Geschenkkarte für einen Empfänger
+See Full Codes and E-mail Them,Vollständige Codes sehen und per E-Mail senden
+Links are not allowed in the gift card names and message.,Links sind in den Namen und der Nachricht der Geschenkkarte nicht erlaubt.
+"The refunded gift cards were already spent for %1. Enter at least that amount as Adjustment Fee, or refund fewer of them.",Die erstatteten Geschenkkarten wurden bereits in Höhe von %1 eingelöst. Geben Sie mindestens diesen Betrag als Korrekturgebühr ein oder erstatten Sie weniger Karten.

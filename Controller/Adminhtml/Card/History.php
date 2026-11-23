@@ -38,7 +38,12 @@ class History extends Action implements HttpGetActionInterface
         $page = $this->resultFactory->create(ResultFactory::TYPE_PAGE);
         if ($page instanceof Page) {
             $page->setActiveMenu('MageOS_GiftCard::cards');
-            $page->getConfig()->getTitle()->prepend((string) __('Gift Card %1', $card['code']));
+            $page->getConfig()->getTitle()->prepend((string) __(
+                'Gift Card %1',
+                $this->_authorization->isAllowed(GiftCards::ACL_CODES)
+                    ? $card['code']
+                    : $this->giftCards->mask((string) $card['code'])
+            ));
         }
         return $page;
     }

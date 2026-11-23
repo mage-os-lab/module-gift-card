@@ -67,7 +67,8 @@ class Redeem implements ObserverInterface
         }
         if ($left > 0) {
             foreach ($debited as $code => $amount) {
-                $this->giftCards->credit($code, $amount, $number, GiftCards::CANCELED);
+                // (string): PHP turns an all-digit code into an integer array key
+                $this->giftCards->credit((string) $code, $amount, $number, GiftCards::CANCELED);
             }
             throw new LocalizedException(__('The gift card balance has changed. Please review your cart.'));
         }

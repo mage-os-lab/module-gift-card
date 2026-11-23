@@ -106,7 +106,6 @@
 "Change Balance, Status and Expiry","Change Balance, Status and Expiry"
 "Codes e-mailed to a recipient show only their last characters here.","Codes e-mailed to a recipient show only their last characters here."
 "Create Gift Cards","Create Gift Cards"
-"E-mail Codes","E-mail Codes"
 "Gift card %1 is disabled: the %2 given back stays on it until it is enabled again.","Gift card %1 is disabled: the %2 given back stays on it until it is enabled again."
 "Gift card %1 was refunded and disabled, but only %2 of its %3 was left on it.","Gift card %1 was refunded and disabled, but only %2 of its %3 was left on it."
 "Gift cards in your cart cannot be paid with a gift card.","Gift cards in your cart cannot be paid with a gift card."
@@ -119,3 +118,8 @@
 "Too many wrong gift card codes. Try again in a few minutes.","Too many wrong gift card codes. Try again in a few minutes."
 "Customer","Customer"
 "E-mailed","E-mailed"
+Gift Card Codes,Gift Card Codes
+Gift Card for a Recipient,Gift Card for a Recipient
+See Full Codes and E-mail Them,See Full Codes and E-mail Them
+Links are not allowed in the gift card names and message.,Links are not allowed in the gift card names and message.
+"The refunded gift cards were already spent for %1. Enter at least that amount as Adjustment Fee, or refund fewer of them.","The refunded gift cards were already spent for %1. Enter at least that amount as Adjustment Fee, or refund fewer of them."

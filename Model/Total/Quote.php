@@ -33,12 +33,19 @@ class Quote extends AbstractTotal
     /**
      * The address that carries no items (billing, or shipping of a virtual cart) is skipped.
      *
+     * Multi-address checkout places one order per address without the quote submit events Redeem debits on:
+     * no gift card is deducted there, or the orders would be reduced with no debit.
+     *
      * @param QuoteModel $quote
      * @param ShippingAssignmentInterface $shippingAssignment
      * @param Total $total
      */
     public function collect(QuoteModel $quote, ShippingAssignmentInterface $shippingAssignment, Total $total)
     {
+        if ($quote->getIsMultiShipping()) {
+            $quote->setData('base_giftcard_amount', 0.0)->setData('giftcard_amount', 0.0);
+            return $this;
+        }
         if (!$shippingAssignment->getItems()) {
             return $this;
         }

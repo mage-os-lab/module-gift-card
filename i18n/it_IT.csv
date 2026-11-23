@@ -98,7 +98,7 @@ You received a gift card worth %amount.,Hai ricevuto una carta regalo da %amount
 Your Name,Il tuo nome
 Your code:,Il tuo codice:
 "for %1, e-mailed on %2","per %1, inviata il %2"
-the invoice date,la data della fattura
+the invoice date,giorno della fattura
 Expiry changed,Scadenza modificata
 Code e-mailed,Codice inviato via e-mail
 Comment,Commento
@@ -106,7 +106,6 @@ Bought In,Acquistata nell'ordine
 "Change Balance, Status and Expiry","Modificare saldo, stato e scadenza"
 Codes e-mailed to a recipient show only their last characters here.,I codici inviati a un destinatario mostrano qui solo gli ultimi caratteri.
 Create Gift Cards,Creare carte regalo
-E-mail Codes,Inviare i codici via e-mail
 Gift card %1 is disabled: the %2 given back stays on it until it is enabled again.,La carta regalo %1 è disattivata: i %2 restituiti restano sulla carta finché non viene riattivata.
 "Gift card %1 was refunded and disabled, but only %2 of its %3 was left on it.","La carta regalo %1 è stata rimborsata e disattivata, ma dei suoi %3 restavano solo %2."
 Gift cards in your cart cannot be paid with a gift card.,Le carte regalo nel carrello non possono essere pagate con una carta regalo.
@@ -119,3 +118,8 @@ The balance was saved.,Il saldo è stato salvato.
 Too many wrong gift card codes. Try again in a few minutes.,Troppi codici di carta regalo errati. Riprova tra qualche minuto.
 Customer,Cliente
 E-mailed,Inviata per e-mail
+Gift Card Codes,Codici della carta regalo
+Gift Card for a Recipient,Carta regalo per un destinatario
+See Full Codes and E-mail Them,Vedere i codici completi e inviarli via e-mail
+Links are not allowed in the gift card names and message.,I link non sono consentiti nei nomi e nel messaggio della carta regalo.
+"The refunded gift cards were already spent for %1. Enter at least that amount as Adjustment Fee, or refund fewer of them.","Le carte regalo rimborsate sono già state spese per %1. Inserisci almeno questo importo come commissione di rettifica, oppure rimborsane di meno."

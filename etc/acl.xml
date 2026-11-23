@@ -11,7 +11,7 @@
                                       translate="title" sortOrder="10"/>
                             <resource id="MageOS_GiftCard::cards_edit" title="Change Balance, Status and Expiry"
                                       translate="title" sortOrder="20"/>
-                            <resource id="MageOS_GiftCard::cards_resend" title="E-mail Codes"
+                            <resource id="MageOS_GiftCard::cards_resend" title="See Full Codes and E-mail Them"
                                       translate="title" sortOrder="30"/>
                         </resource>
                     </resource>

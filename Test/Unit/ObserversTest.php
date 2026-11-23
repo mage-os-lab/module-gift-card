@@ -9,11 +9,15 @@ use MageOS\GiftCard\Observer\Restore;
 use MageOS\GiftCard\Observer\Revoke;
 use Magento\Directory\Model\Currency;
 use Magento\Framework\DataObject;
+use Magento\Framework\DB\Adapter\AdapterInterface;
+use Magento\Framework\DB\Select;
+use Magento\Framework\Event;
 use Magento\Framework\Event\Observer;
 use Magento\Framework\Exception\LocalizedException;
 use Magento\Sales\Model\Order;
 use Magento\Sales\Model\Order\Creditmemo;
 use Magento\Sales\Model\Order\Invoice;
+use Magento\Sales\Model\ResourceModel\Order as OrderResource;
 use PHPUnit\Framework\MockObject\Stub;
 use PHPUnit\Framework\TestCase;
 
@@ -109,7 +113,7 @@ class ObserversTest extends TestCase
         $giftCards = $this->giftCards(true);
         $giftCards->method('getUsedByOrder')->willReturn(0.0);
 
-        (new Restore($giftCards))->execute(new Observer(['order' => $this->order([]), 'quote' => new DataObject()]));
+        $this->restore($giftCards)->execute(new Observer(['order' => $this->order([]), 'quote' => new DataObject()]));
 
         $this->assertSame([], $this->credits);
     }
@@ -133,7 +137,7 @@ class ObserversTest extends TestCase
             }
         );
 
-        (new Restore($giftCards))->execute(new Observer(['order' => $order]));
+        $this->restore($giftCards)->execute(new Observer(['order' => $order]));
 
         $this->assertCount(1, $comments);
         $this->assertStringContainsString('…' . 'ABC', $comments[0]);
@@ -161,11 +165,148 @@ class ObserversTest extends TestCase
         $creditmemo = $this->createStub(Creditmemo::class);
         $creditmemo->method('getOrder')->willReturn($order);
         $creditmemo->method('getAllItems')->willReturn([$item]);
+        $creditmemo->method('getData')->willReturnMap([['base_adjustment_negative', null, 15.0]]);
 
         (new Revoke($giftCards))->execute(new Observer(['creditmemo' => $creditmemo]));
 
         $this->assertCount(1, $comments);
         $this->assertStringContainsString('…1234', $comments[0]);
+    }
+
+    /**
+     * Refunding a card the customer already spent is refused, unless the adjustment fee takes the spent part back.
+     */
+    public function testCreditMemoOfASpentCardNeedsAnAdjustmentFee(): void
+    {
+        $giftCards = $this->createStub(GiftCards::class);
+        $giftCards->method('revoke')
+            ->willReturn([['code' => 'ABCDEF1234', 'balance' => 10.0, 'initial_balance' => 25.0]]);
+        $order = $this->createStub(Order::class);
+        $order->method('getBaseCurrency')->willReturn($this->currency());
+        $item = new DataObject(['qty' => 1, 'order_item_id' => 42, 'order_item' => new DataObject()]);
+        $creditmemo = $this->createStub(Creditmemo::class);
+        $creditmemo->method('getOrder')->willReturn($order);
+        $creditmemo->method('getAllItems')->willReturn([$item]);
+        $creditmemo->method('getData')->willReturnMap([['base_adjustment_negative', null, 14.99]]);
+
+        $this->expectException(LocalizedException::class);
+        (new Revoke($giftCards))->execute(new Observer(['creditmemo' => $creditmemo]));
+    }
+
+    /**
+     * Core also reports a failed checkout after the order was saved (a later observer threw): the order
+     * stays, paid by the card, so nothing is given back.
+     */
+    public function testFailureAfterTheOrderWasSavedGivesNothingBack(): void
+    {
+        $select = $this->createStub(Select::class);
+        $select->method('from')->willReturnSelf();
+        $select->method('where')->willReturnSelf();
+        $connection = $this->createStub(AdapterInterface::class);
+        $connection->method('select')->willReturn($select);
+        $connection->method('fetchOne')->willReturn('5');
+        $resource = $this->createStub(OrderResource::class);
+        $resource->method('getConnection')->willReturn($connection);
+        $order = $this->order([]);
+        $order->method('getId')->willReturn(5);
+        $giftCards = $this->giftCards(true);
+        $giftCards->method('getUsedByOrder')->willReturn(30.0);
+
+        $this->restore($giftCards, $resource)
+            ->execute(new Observer(['order' => $order, 'quote' => new DataObject()]));
+
+        $this->assertSame([], $this->credits);
+    }
+
+    /**
+     * A denied payment cancels the order without "order_cancel_after": the save of the newly canceled order
+     * gives the amount back, and a second pass finds nothing left to give in the history.
+     */
+    public function testOrderSavedAsNewlyCanceledGivesBackOnce(): void
+    {
+        $left = 30.0;
+        $giftCards = $this->giftCards(true);
+        $giftCards->method('getUsedByOrder')->willReturnCallback(function () use (&$left): float {
+            [$used, $left] = [$left, 0.0];
+            return $used;
+        });
+        $order = $this->order([]);
+        $order->method('getState')->willReturn(Order::STATE_CANCELED, Order::STATE_CANCELED, Order::STATE_PROCESSING);
+        $order->method('getOrigData')->willReturn(Order::STATE_PAYMENT_REVIEW);
+        $save = new Observer(['event' => new Event(['name' => 'sales_order_save_before']), 'order' => $order]);
+
+        $restore = $this->restore($giftCards);
+        $restore->execute($save);
+        $restore->execute($save);
+        $restore->execute($save);
+
+        $this->assertSame([['ABC', 30.0, GiftCards::CANCELED]], $this->credits);
+    }
+
+    /**
+     * An invoiced share that was not refunded (shipping kept by the merchant) stays "used" in the history: the
+     * save that follows a normal cancel must not give it back on top of the part not invoiced.
+     */
+    public function testCancelThenSaveGivesBackOnlyThePartNotInvoiced(): void
+    {
+        $used = 20.0;
+        $giftCards = $this->createStub(GiftCards::class);
+        $giftCards->method('getUsedByOrder')->willReturnCallback(function () use (&$used): float {
+            return $used;
+        });
+        $giftCards->method('credit')->willReturnCallback(
+            function (string $code, float $amount, ?string $order, string $action) use (&$used): bool {
+                $this->credits[] = [$code, $amount, $action];
+                $used -= $amount;
+                return true;
+            }
+        );
+        $paid = $this->createStub(Invoice::class);
+        $paid->method('isCanceled')->willReturn(false);
+        $paid->method('getData')->willReturnMap([['base_giftcard_amount', null, 20.0]]);
+        $data = ['base_giftcard_amount' => 30.0, 'giftcard_code' => 'ABC'];
+        $order = $this->createStub(Order::class);
+        $order->method('getData')->willReturnCallback(function ($key) use (&$data) {
+            return $data[$key] ?? null;
+        });
+        $order->method('setData')->willReturnCallback(function ($key, $value) use (&$data, $order) {
+            $data[$key] = $value;
+            return $order;
+        });
+        $order->method('getInvoiceCollection')->willReturn([$paid]);
+        $order->method('getState')->willReturn(Order::STATE_CANCELED);
+        $order->method('getOrigData')->willReturn(Order::STATE_PROCESSING);
+
+        $restore = $this->restore($giftCards);
+        foreach (['order_cancel_after', 'sales_order_save_before'] as $name) {
+            $restore->execute(new Observer(['event' => new Event(['name' => $name]), 'order' => $order]));
+        }
+
+        $this->assertSame([['ABC', 10.0, GiftCards::CANCELED]], $this->credits);
+    }
+
+    /**
+     * An all-digit code must not break giving the first debit back when a later card fails.
+     */
+    public function testAllDigitCodeIsGivenBackWhenTheNextCardFails(): void
+    {
+        $giftCards = $this->createStub(GiftCards::class);
+        $giftCards->method('getBalance')->willReturn(10.0);
+        $giftCards->method('debit')->willReturnCallback(fn (string $code) => $code === '1234567890123456');
+        $giftCards->method('credit')->willReturnCallback(
+            function (string $code, float $amount, ?string $order, string $action): bool {
+                $this->credits[] = [$code, $amount, $action];
+                return true;
+            }
+        );
+        $quote = new DataObject(['giftcard_code' => '1234567890123456,B', 'base_giftcard_amount' => 20.0]);
+
+        try {
+            $this->redeem($giftCards, $quote, new DataObject(['increment_id' => '1']));
+            $this->fail('The order should be refused.');
+        } catch (LocalizedException) {
+            $this->assertSame([['1234567890123456', 10.0, GiftCards::CANCELED]], $this->credits);
+        }
     }
 
     /**
@@ -187,7 +328,7 @@ class ObserversTest extends TestCase
         $creditmemo->method('getOrder')->willReturn($order);
         $creditmemo->method('getData')->willReturnMap([['base_giftcard_amount', null, 12.0]]);
 
-        (new Restore($giftCards))->execute(new Observer(['creditmemo' => $creditmemo]));
+        $this->restore($giftCards)->execute(new Observer(['creditmemo' => $creditmemo]));
 
         $this->assertSame([['B', 5.0, GiftCards::REFUNDED], ['A', 7.0, GiftCards::REFUNDED]], $this->credits);
     }
@@ -202,7 +343,7 @@ class ObserversTest extends TestCase
         $paid->method('getData')->willReturnMap([['base_giftcard_amount', null, 20.0]]);
         $order = $this->order([$paid]);
 
-        (new Restore($this->giftCards(true)))->execute(new Observer(['order' => $order]));
+        $this->restore($this->giftCards(true))->execute(new Observer(['order' => $order]));
 
         $this->assertSame([['ABC', 10.0, GiftCards::CANCELED]], $this->credits);
     }
@@ -216,9 +357,20 @@ class ObserversTest extends TestCase
         $creditmemo->method('getOrder')->willReturn($this->order([]));
         $creditmemo->method('getData')->willReturnMap([['base_giftcard_amount', null, 12.5]]);
 
-        (new Restore($this->giftCards(true)))->execute(new Observer(['creditmemo' => $creditmemo]));
+        $this->restore($this->giftCards(true))->execute(new Observer(['creditmemo' => $creditmemo]));
 
         $this->assertSame([['ABC', 12.5, GiftCards::REFUNDED]], $this->credits);
+    }
+
+    /**
+     * Restore observer; the order resource only tells whether an order is in the database.
+     *
+     * @param GiftCards $giftCards
+     * @param OrderResource|null $resource
+     */
+    private function restore(GiftCards $giftCards, ?OrderResource $resource = null): Restore
+    {
+        return new Restore($giftCards, $resource ?? $this->createStub(OrderResource::class));
     }
 
     /**

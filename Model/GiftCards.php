@@ -29,6 +29,10 @@ class GiftCards
 
     public const XML_VALIDITY = 'mageos_giftcard/general/validity_months';
     public const MAX_SEND_ATTEMPTS = 5;
+    /** Days an expired card can be used again after an order gives money back to it. */
+    public const CREDIT_GRACE_DAYS = 30;
+    /** Admins without this resource see only the end of the codes: a code is all it takes to spend a card. */
+    public const ACL_CODES = 'MageOS_GiftCard::cards_resend';
 
     /**
      * @param ResourceConnection $resource
@@ -137,8 +141,9 @@ class GiftCards
     /**
      * Add the amount to the balance and return whether the card can spend it.
      *
-     * An expired card gets a new validity from now (none if no validity is configured), so the money is not
-     * lost; a disabled card stays disabled, and false tells the caller to warn the merchant.
+     * An expired card can be used for CREDIT_GRACE_DAYS more days, so the money is not lost; not for a whole
+     * new validity, or an order placed and canceled around the expiry would renew the card for ever.
+     * A disabled card stays disabled, and false tells the caller to warn the merchant.
      *
      * @param string $code
      * @param float $amount
@@ -162,7 +167,7 @@ class GiftCards
             );
             if ($credited) {
                 $this->log($where, $action, $amount, $orderNumber);
-                $expires = $this->validityEnd();
+                $expires = gmdate('Y-m-d H:i:s', time() + self::CREDIT_GRACE_DAYS * 86400);
                 $extended = $connection->update(
                     $this->table(),
                     ['expires_at' => $expires],
@@ -188,8 +193,9 @@ class GiftCards
      *
      * @param string $code
      * @param string $orderNumber
+     * @return float|null null when the history knows nothing of this order (placed before 1.1.0)
      */
-    public function getUsedByOrder(string $code, string $orderNumber): float
+    public function getUsedByOrder(string $code, string $orderNumber): ?float
     {
         $connection = $this->resource->getConnection();
         $sum = $connection->fetchOne(
@@ -200,7 +206,7 @@ class GiftCards
                 ->where('h.order_increment_id = ?', $orderNumber)
                 ->where('h.action IN (?)', [self::USED, self::REFUNDED, self::CANCELED])
         );
-        return max(0.0, -(float) $sum);
+        return is_numeric($sum) ? max(0.0, -(float) $sum) : null;
     }
 
     /**
@@ -299,6 +305,19 @@ class GiftCards
     }
 
     /**
+     * Number of cards an order line already issued, disabled ones included.
+     *
+     * @param int $orderItemId
+     */
+    public function countByOrderItem(int $orderItemId): int
+    {
+        $connection = $this->resource->getConnection();
+        return (int) $connection->fetchOne(
+            $connection->select()->from($this->table(), 'COUNT(*)')->where('order_item_id = ?', $orderItemId)
+        );
+    }
+
+    /**
      * Cards whose gift e-mail is due.
      *
      * Spendable, with a recipient, send date reached, not sent yet, and fewer than MAX_SEND_ATTEMPTS failures.
@@ -339,14 +358,17 @@ class GiftCards
      * @param int $id
      * @param string $email
      * @param string|null $adminUser who sent it again from the admin
+     * @param bool $gift false when sent to someone else than the recipient: the gift itself is still to send
      */
-    public function markSent(int $id, string $email, ?string $adminUser = null): void
+    public function markSent(int $id, string $email, ?string $adminUser = null, bool $gift = true): void
     {
-        $this->resource->getConnection()->update(
-            $this->table(),
-            ['sent_at' => gmdate('Y-m-d H:i:s')],
-            ['giftcard_id = ?' => $id, 'sent_at IS NULL']
-        );
+        if ($gift) {
+            $this->resource->getConnection()->update(
+                $this->table(),
+                ['sent_at' => gmdate('Y-m-d H:i:s')],
+                ['giftcard_id = ?' => $id, 'sent_at IS NULL']
+            );
+        }
         $this->log(['giftcard_id = ?' => $id], self::SENT, 0.0, null, $adminUser, $email);
     }
 

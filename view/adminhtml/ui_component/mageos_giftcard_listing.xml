@@ -79,6 +79,7 @@
         <column name="code" sortOrder="20">
             <settings>
                 <filter>text</filter>
+                <sortable>false</sortable>
                 <label translate="true">Code</label>
             </settings>
         </column>

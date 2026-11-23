@@ -98,7 +98,7 @@ You received a gift card worth %amount.,Has recibido una tarjeta regalo de %amou
 Your Name,Tu nombre
 Your code:,Tu código:
 "for %1, e-mailed on %2","para %1, enviada el %2"
-the invoice date,la fecha de factura
+the invoice date,día de la factura
 Expiry changed,Caducidad modificada
 Code e-mailed,Código enviado por e-mail
 Comment,Comentario
@@ -106,7 +106,6 @@ Bought In,Comprada en el pedido
 "Change Balance, Status and Expiry","Cambiar saldo, estado y caducidad"
 Codes e-mailed to a recipient show only their last characters here.,Los códigos enviados a un destinatario solo muestran aquí sus últimos caracteres.
 Create Gift Cards,Crear tarjetas regalo
-E-mail Codes,Enviar códigos por correo
 Gift card %1 is disabled: the %2 given back stays on it until it is enabled again.,La tarjeta regalo %1 está desactivada: los %2 devueltos se quedan en ella hasta que se vuelva a activar.
 "Gift card %1 was refunded and disabled, but only %2 of its %3 was left on it.","La tarjeta regalo %1 se ha reembolsado y desactivado, pero solo le quedaban %2 de sus %3."
 Gift cards in your cart cannot be paid with a gift card.,Las tarjetas regalo de su carrito no se pueden pagar con una tarjeta regalo.
@@ -119,3 +118,8 @@ The balance was saved.,Se ha guardado el saldo.
 Too many wrong gift card codes. Try again in a few minutes.,Demasiados códigos de tarjeta regalo erróneos. Inténtelo de nuevo dentro de unos minutos.
 Customer,Cliente
 E-mailed,Enviada por e-mail
+Gift Card Codes,Códigos de tarjeta regalo
+Gift Card for a Recipient,Tarjeta regalo para un destinatario
+See Full Codes and E-mail Them,Ver los códigos completos y enviarlos por correo
+Links are not allowed in the gift card names and message.,No se permiten enlaces en los nombres ni en el mensaje de la tarjeta regalo.
+"The refunded gift cards were already spent for %1. Enter at least that amount as Adjustment Fee, or refund fewer of them.","Las tarjetas regalo reembolsadas ya se han gastado por %1. Introduce al menos ese importe como cargo de ajuste, o reembolsa menos tarjetas."
