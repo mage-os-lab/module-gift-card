@@ -106,7 +106,7 @@ A code applied in the cart is kept through any checkout, and the cards are debit
 - **Hyvä Checkout**: the gift card line is in the price summary, with the *Apply Gift Card* form under it.
 - **Loki Checkout**: the gift card line is in the sidebar totals, with the *Apply Gift Card* form after the coupon code.
 
-In Hyvä Checkout and Loki Checkout the form is the cart's, posted as a plain form: applying or removing a code reloads the checkout, on the same step, with what the customer already filled in. Neither checkout is required by the module, and the integration was written from their layouts without a licensed install to run it on: check it on yours.
+In Hyvä Checkout and Loki Checkout the form is the cart's, posted as a plain form: applying or removing a code reloads the checkout, on the same step, with what the customer already filled in. Neither checkout is required by the module. Tested with Loki Checkout 2.8 on the Hyvä default theme (apply, remove, wrong code, orders paid in part and in full by a card). The Hyvä Checkout integration was written from its layouts without a licensed install to run it on: check it on yours.
 
 On Hyvä, the module's templates use Tailwind classes: rebuild the theme's styles after installing it (the module registers itself for Hyvä's Tailwind compilation).
 

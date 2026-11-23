@@ -22,6 +22,9 @@
             <argument name="identifierName" xsi:type="string">history_id</argument>
         </arguments>
     </virtualType>
+    <type name="Magento\Quote\Model\Cart\TotalsConverter">
+        <plugin name="mageos_giftcard_grand_total_last" type="MageOS\GiftCard\Plugin\GrandTotalLast"/>
+    </type>
     <type name="Magento\Quote\Model\Quote\Item\ToOrderItem">
         <plugin name="mageos_giftcard_copy_gift_options" type="MageOS\GiftCard\Plugin\CopyGiftOptions"/>
     </type>
