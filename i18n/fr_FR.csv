@@ -123,3 +123,5 @@ Gift Card for a Recipient,Carte cadeau pour un destinataire
 See Full Codes and E-mail Them,Voir les codes complets et les envoyer par e-mail
 Links are not allowed in the gift card names and message.,Les liens ne sont pas autorisés dans les noms et le message de la carte cadeau.
 "The refunded gift cards were already spent for %1. Enter at least that amount as Adjustment Fee, or refund fewer of them.","Les cartes cadeaux remboursées ont déjà été dépensées à hauteur de %1. Saisissez au moins ce montant en frais d'ajustement, ou remboursez-en moins."
+The order was never saved,La commande n'a jamais été enregistrée
+"This refund would leave the customer with more than was paid: gift cards of this order worth %1 are still active. Refund the gift card lines with their quantities, or disable the cards first.","Ce remboursement laisserait au client plus que ce qui a été payé : des cartes cadeaux de cette commande, d'une valeur de %1, sont encore actives. Remboursez les lignes de carte cadeau avec leurs quantités, ou désactivez d'abord les cartes."

@@ -30,7 +30,9 @@ class Revoke implements ObserverInterface
      * merchant would give back money the customer already used. The exception rolls back core's transaction,
      * and with it the cards disabled here.
      *
-     * Shortcut: an adjustment refund without quantities disables nothing.
+     * An adjustment refund without quantities disables nothing. So whatever the credit memo holds, it is
+     * also refused when the customer would be left with more than was paid: the money refunded on the order
+     * so far, plus the value of the cards the order issued that are still active.
      *
      * @param Observer $observer
      * @throws LocalizedException
@@ -61,6 +63,16 @@ class Revoke implements ObserverInterface
                 'The refunded gift cards were already spent for %1. Enter at least that amount as Adjustment Fee, '
                 . 'or refund fewer of them.',
                 $order->getBaseCurrency()->formatTxt($spent)
+            ));
+        }
+        // core added this credit memo to the order's refunded total before the event
+        $held = $this->giftCards->getHeldByOrder((int) $order->getId());
+        $paid = (float) $order->getBaseTotalPaid() + (float) $order->getData('base_giftcard_amount');
+        if ($held > 0 && round((float) $order->getBaseTotalRefunded() + $held - $paid, 4) > 0) {
+            throw new LocalizedException(__(
+                'This refund would leave the customer with more than was paid: gift cards of this order worth %1 '
+                . 'are still active. Refund the gift card lines with their quantities, or disable the cards first.',
+                $order->getBaseCurrency()->formatTxt($held)
             ));
         }
     }

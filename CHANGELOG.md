@@ -2,6 +2,30 @@
 
 All notable changes to this module are documented here. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and versions follow [Semantic Versioning](https://semver.org/).
 
+## [Unreleased]
+
+Gift cards can be applied to a cart and listed over REST and GraphQL, and two cron jobs repair what a request that died half-way leaves behind: a card debited for an order that was never saved, a paid invoice that issued no card.
+
+Upgrade: `setup:upgrade` adds a column to `sales_order_item` and two indexes to the module's own tables; on a large shop, plan it like any change to the order tables. One behaviour changes: a credit memo is refused when it would leave the customer with active gift cards and refunded money for more than was paid (see *Changed*). Magento's cron must run for the two new jobs.
+
+### Added
+
+- REST API: the gift cards applied to a cart (list, apply, remove), for customers (`/V1/carts/mine/gift-cards`) and guests (`/V1/guest-carts/:cartId/gift-cards`), and the cards of a customer account (`/V1/customers/me/gift-cards`). See *API* in the README.
+- GraphQL: mutations `applyGiftCardToCart` and `removeGiftCardFromCart`, field `applied_gift_cards` on the cart and field `gift_cards` on the customer.
+- Cron job `mageos_giftcard_give_back_orphans`, every hour: a card debited for an order that was never saved (the request died between the two) gets its money back an hour later, with *The order was never saved* in its history.
+- Cron job `mageos_giftcard_issue_missing`, every 15 minutes: gift cards that a paid invoice should have issued and did not (an error, a request that died) are issued and e-mailed, for invoices paid in the last 7 days.
+
+### Changed
+
+- Credit memos: a refund that would leave the customer with more than was paid is refused, counting the money refunded on the order and the value of the gift cards it issued that are still active. It closes the refund of a gift card by *Adjustment Refund* alone, without quantity, which gave the money back and left the card usable. Refund the gift card lines with their quantities, or disable the cards first.
+- The API and the cart form share the same rules: five cards per cart, 10 wrong codes block the cart for 15 minutes, whatever the way in.
+
+### Fixed
+
+- An order line remembers that it sold a gift card: a product unflagged or deleted between the order and the payment of its invoice no longer leaves the customer without the card they paid for. Applies to orders placed from this version on.
+- When some of the cards of an invoice line were already issued, each remaining card got the value of the whole line instead of one unit.
+- The gift e-mails are sent by one cron run at a time, 100 per run: two runs overlapping could e-mail the same card twice.
+
 ## [2.0.0] - 2026-11-23
 
 Security and money fixes from a full review of the module: full codes are hidden from admins who only consult the cards, and several ways to get back, or lose, more than was paid are closed.

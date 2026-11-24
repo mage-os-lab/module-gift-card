@@ -8,7 +8,9 @@ Gift cards that are sold as regular products and redeemed in the cart.
 - Customer-chosen amount: give a virtual gift card a minimum (above 0) and a maximum amount, and the customer types the amount on the product page.
 - Send as a gift: on the product page, the buyer can enter a recipient name and e-mail, their own name, a message and a send date. The recipient receives the code by e-mail on that date (right after the invoice without a date); the buyer's e-mail shows only the end of that code.
 - Customers enter codes in the cart, or in the order summary of Hyvä Checkout and Loki Checkout, up to five per order. The amount is deducted after tax, like a means of payment; the remaining balance stays on each card. Gift cards cannot pay for gift cards bought in the same cart. After 10 wrong codes in one cart, codes are refused in that cart for 15 minutes.
-- The balance is debited atomically when the order is placed, and credited back on order cancellation or credit memo; money given back to an expired card can be spent for 30 more days. Refunding a purchased gift card disables the cards of the refunded line, unspent ones first; a card already partly spent is noted on the order.
+- The balance is debited atomically when the order is placed, and credited back on order cancellation or credit memo; money given back to an expired card can be spent for 30 more days. Refunding a purchased gift card disables the cards of the refunded line, unspent ones first; a card already partly spent is noted on the order. A credit memo that would leave the customer with active cards and refunded money for more than was paid is refused.
+- Two cron jobs repair what a request that died half-way leaves behind: a card debited for an order that was never saved gets its money back an hour later, and a paid invoice that issued no card gets its cards within 15 minutes.
+- REST and GraphQL: apply, remove and list the gift cards of a cart, and list the cards of a customer account. See [API](#api).
 - *My Gift Cards* in the customer account lists the cards of the account, with balance, status and expiry. A card belongs to the logged-in buyer, or for a gift to the account with the recipient's e-mail; a gift shows up there only once e-mailed, with the end of its code (the full code is in the e-mail). There is no public page to look up a code's balance.
 - Optional expiry, after a validity in months set in the configuration.
 - The gift card lines (amount, recipient, message, send date) are shown with the cart item, in the order, invoices and e-mails; the gift card total is shown in cart totals, the checkout summary, order views, the order e-mail and admin invoices / credit memos.
@@ -18,13 +20,15 @@ Limitations: no multi-address checkout (a code applied in the cart is not deduct
 
 ## Compatibility
 
-Mage-OS 3.6 and 4.x, and Magento Open Source 2.4.9: all share the Magento 2.4.9 base (`magento/framework` ^103.0.9). PHP 8.3 to 8.5. CI runs the check-extension workflow on the currently supported Mage-OS versions (today Mage-OS 3.6.0 with PHP 8.4; Mage-OS 4.0 joins once the check-extension actions know it); developed on Mage-OS 4.0.0 with PHP 8.5. GraphQL is not supported.
+Mage-OS 3.6 and 4.x, and Magento Open Source 2.4.9: all share the Magento 2.4.9 base (`magento/framework` ^103.0.9). PHP 8.3 to 8.5. CI runs the check-extension workflow on the currently supported Mage-OS versions (today Mage-OS 3.6.0 with PHP 8.4; Mage-OS 4.0 joins once the check-extension actions know it); developed on Mage-OS 4.0.0 with PHP 8.5.
 
 - **Luma** (theme and checkout): supported, run in a browser on Mage-OS 4.0.0 (product page with gift fields, cart form and totals, checkout summary and order, *My Gift Cards*). Its *Check Out with Multiple Addresses* does not use gift cards: a code applied in the cart is ignored there, and the orders are placed at their full total.
 - **Hyvä Theme**: supported, run on the Hyvä default theme 1.5. The cart total line follows the default theme's own templates (inline Alpine expressions): it was not run on the Hyvä CSP theme.
 - **Hyvä Checkout**: written from its layouts, not run (no licensed install): check it on yours. See [Checkouts](#checkouts).
 - **Loki Checkout**: supported, run on Loki Checkout 2.8 with the Hyvä default theme. See [Checkouts](#checkouts).
 - **Elasticsuite**: nothing to integrate. The three product attributes are not searchable, filterable or sortable, and the module touches neither search nor product lists; no reindex is needed. Run with Elasticsuite 2.12 as the search engine: gift card products are found by the catalog search.
+
+The REST routes and the GraphQL schema were written from core's own (coupons, cart) and are covered by unit tests of their rules; they were not called on a running shop. The module requires neither `Magento_Webapi` nor the GraphQL modules: without them, the routes and the schema are simply not read.
 
 ## Installation
 
@@ -59,6 +63,12 @@ E-mails, sent from the *Sales Representative* identity of the store:
 
 ![Gift card e-mail to a recipient](docs/images/gift-email.png)
 
+Cron jobs (group `default`), all three needing Magento's cron:
+
+- `mageos_giftcard_send_gifts`, every minute: the gift e-mails whose date has come, 100 per run.
+- `mageos_giftcard_issue_missing`, every 15 minutes: issues the cards that an invoice paid in the last 7 days should have issued and did not (an error while they were created, a request that died), 5 minutes after the payment at the earliest. Each one is logged in `var/log/system.log` ("gift card(s) issued late"). Only for orders placed after the upgrade from 2.0.0.
+- `mageos_giftcard_give_back_orphans`, every hour: gives back what a card paid for an order that was never saved. The card is debited just before the order is saved; when the request dies in between (PHP killed, server restart), no order exists and the money would be lost. A debit of the last 7 days, older than an hour, whose order number is in no order, is credited back, with *The order was never saved* in the card's history and a line in `var/log/system.log` ("was debited but never saved"). An order that exists is never touched. If you delete orders from the database, the gift cards that paid for an order deleted within 7 days get their money back too.
+
 ## Managing gift cards
 
 *Sales > Operations > Gift Cards* shows all cards. Filter by code, balance, status, expiry, recipient, *Customer* (the e-mail of the account that owns the card), *Bought In* (the order the card was bought in) or date. *Columns* adds the recipient and sender names, the send date and when the gift was e-mailed; views can be saved as bookmarks, and *Export* downloads the filtered cards as CSV or Excel XML, full codes included. Amounts are in base currency. The orders a card paid for are in its *History*. Click a row to edit its *Status* or *Expires* date in place, then *Save*; select several rows to change them together. A disabled or expired card keeps its balance but cannot be applied in the cart or spent at checkout. Cards issued before version 1.1.0 have no initial balance or order.
@@ -82,6 +92,38 @@ ACL resources, under *Sales > Operations > Gift Cards* (which alone gives the gr
 *Send the Code To* e-mails the code and current balance again, to the recipient or buyer by default or to any address typed there (the customer lost the e-mail, or gave a wrong address). A gift not sent yet still goes to its recipient on its date when the code is sent to another address.
 
 ![Gift card history](docs/images/admin-history.png)
+
+## API
+
+All amounts are in base currency, dates in UTC. The rules are those of the cart form: up to five cards per cart, and after 10 wrong codes in one cart, codes are refused in that cart for 15 minutes. A code is refused with the message the cart form shows (HTTP 400 in REST). There is no route to look up the balance of a code that is not applied to a cart, and no admin route.
+
+REST, as the logged-in customer (customer token):
+
+| Route | Does |
+|---|---|
+| `GET /V1/carts/mine/gift-cards` | lists the cards applied to the cart |
+| `POST /V1/carts/mine/gift-cards`, body `{"code": "…"}` | applies a code, returns the list |
+| `POST /V1/carts/mine/gift-cards/remove`, body `{"code": "…"}` | removes a code, returns the list |
+| `GET /V1/customers/me/gift-cards` | lists the cards of the account, as *My Gift Cards* does |
+
+The same three cart routes exist for guests under `/V1/guest-carts/:cartId/gift-cards`, with the masked cart ID. They answer only for guest carts: the cart of a customer account is not reachable with its masked ID alone. Codes are sent in the request body, never in the URL, so that they do not end up in access logs.
+
+Each card is returned as `code`, `balance`, `status` (`active`, `disabled`, `expired`, `used_up`), `expires_at` and, in a cart, `applied_amount` (what the card pays of that cart). In the account list, a gift shows only the end of its code, as in *My Gift Cards*.
+
+GraphQL:
+
+```graphql
+mutation {
+  applyGiftCardToCart(input: {cart_id: "…", gift_card_code: "…"}) {
+    cart {
+      applied_gift_cards { code applied_balance { value currency } current_balance { value currency } expiration_date }
+      prices { grand_total { value currency } }
+    }
+  }
+}
+```
+
+`removeGiftCardFromCart` takes the same input. `applied_gift_cards` is a field of any `Cart`; `customer { gift_cards { code balance { value currency } status expiration_date } }` lists the cards of the logged-in customer. The names follow those of Adobe Commerce's gift card schema where it has a counterpart; `Customer.gift_cards` is this module's own.
 
 ## Getting started
 
@@ -130,6 +172,9 @@ On Hyvä, the module's templates use Tailwind classes: rebuild the theme's style
 - **"The balance of gift card … changed meanwhile"** on the history page: the card was used since the page was loaded. Reload the page and set the balance again.
 - **"Gift card … was refunded and disabled, but only … was left on it"** in an order comment: the refunded card had been spent in part. The customer got back more than was left on the card; decide whether to recover the difference.
 - **"Gift card … is disabled: the … given back stays on it"** in an order comment: a canceled or refunded order gave money back to a disabled card. Enable the card in the grid if the customer should keep it.
+- **"This refund would leave the customer with more than was paid"** when creating a credit memo: the order issued gift cards that are still active, and with this refund the customer would hold those cards and refunded money for more than the order was paid. Typically an *Adjustment Refund* entered to refund a gift card, with its quantity left at 0: enter the quantity instead, which disables the card. For a goodwill refund on top, disable the cards first in *Sales > Operations > Gift Cards*.
+- **"The order was never saved"** in a card's history: the card was debited for an order whose request died before the order was saved; the hourly cron gave the money back. Nothing to do.
+- **"gift card(s) issued late"** in `var/log/system.log`: a paid invoice had not issued its cards; the cron issued and e-mailed them. Look for the error logged when the invoice was paid.
 - **"The refunded gift cards were already spent for …"** when creating a credit memo: the gift cards being refunded were used to pay for other orders. Enter that amount as *Adjustment Fee* to refund only what is left on them, or refund fewer units.
 - **"Links are not allowed in the gift card names and message"**: the shop e-mails this text to an address the buyer chose, so web addresses are refused.
 - **"Set a gift card minimum amount above 0"** when saving a product: a maximum amount needs a minimum above 0 and not above the maximum.

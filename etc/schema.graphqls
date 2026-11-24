@@ -1,0 +1,51 @@
+type Mutation {
+    applyGiftCardToCart(input: ApplyGiftCardToCartInput @doc(description: "The cart and the gift card code to apply to it.")): ApplyGiftCardToCartOutput @resolver(class: "MageOS\\GiftCard\\Model\\Resolver\\CartGiftCard") @doc(description: "Apply a gift card code to the cart. Up to five cards per cart; after too many wrong codes, codes are refused in that cart for a few minutes.")
+    removeGiftCardFromCart(input: RemoveGiftCardFromCartInput @doc(description: "The cart and the gift card code to remove from it.")): RemoveGiftCardFromCartOutput @resolver(class: "MageOS\\GiftCard\\Model\\Resolver\\CartGiftCard") @doc(description: "Remove a gift card code from the cart.")
+}
+
+input ApplyGiftCardToCartInput @doc(description: "Defines the gift card code to apply to the cart.") {
+    cart_id: String! @doc(description: "The unique ID of a `Cart` object.")
+    gift_card_code: String! @doc(description: "The gift card code.")
+}
+
+input RemoveGiftCardFromCartInput @doc(description: "Defines the gift card code to remove from the cart.") {
+    cart_id: String! @doc(description: "The unique ID of a `Cart` object.")
+    gift_card_code: String! @doc(description: "The gift card code.")
+}
+
+type ApplyGiftCardToCartOutput @doc(description: "The cart after applying a gift card.") {
+    cart: Cart! @doc(description: "The cart after applying a gift card.")
+}
+
+type RemoveGiftCardFromCartOutput @doc(description: "The cart after removing a gift card.") {
+    cart: Cart! @doc(description: "The cart after removing a gift card.")
+}
+
+type Cart {
+    applied_gift_cards: [AppliedGiftCard] @resolver(class: "MageOS\\GiftCard\\Model\\Resolver\\AppliedGiftCards") @doc(description: "The gift cards applied to the cart, in the order they pay.")
+}
+
+type AppliedGiftCard @doc(description: "A gift card applied to the cart. Amounts are in the base currency.") {
+    code: String @doc(description: "The gift card code.")
+    applied_balance: Money @doc(description: "What the card pays of this cart.")
+    current_balance: Money @doc(description: "The balance left on the card.")
+    expiration_date: String @doc(description: "The expiry date of the card (UTC); null when it never expires.")
+}
+
+type Customer {
+    gift_cards: [CustomerGiftCard] @resolver(class: "MageOS\\GiftCard\\Model\\Resolver\\CustomerGiftCards") @doc(description: "The gift cards of the customer's account, newest first.")
+}
+
+type CustomerGiftCard @doc(description: "A gift card of the customer's account. Amounts are in the base currency.") {
+    code: String @doc(description: "The gift card code; only its last characters for a gift the customer received, whose full code is in the e-mail.")
+    balance: Money @doc(description: "The balance left on the card.")
+    status: GiftCardStatus @doc(description: "What can still be done with the card.")
+    expiration_date: String @doc(description: "The expiry date of the card (UTC); null when it never expires.")
+}
+
+enum GiftCardStatus @doc(description: "What can still be done with a gift card.") {
+    ACTIVE
+    DISABLED
+    EXPIRED
+    USED_UP
+}

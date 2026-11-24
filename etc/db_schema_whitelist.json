@@ -28,7 +28,8 @@
             "MAGEOS_GIFTCARD_ORDER_ID": true,
             "MAGEOS_GIFTCARD_CUSTOMER_ID": true,
             "MAGEOS_GIFTCARD_SEND_AT": true,
-            "MAGEOS_GIFTCARD_SENT_AT_SEND_AT": true
+            "MAGEOS_GIFTCARD_SENT_AT_SEND_AT": true,
+            "MAGEOS_GIFTCARD_ORDER_ITEM_ID": true
         }
     },
     "mageos_giftcard_history": {
@@ -46,6 +47,9 @@
         "constraint": {
             "PRIMARY": true,
             "MAGEOS_GIFTCARD_HISTORY_GIFTCARD_ID_MAGEOS_GIFTCARD_GIFTCARD_ID": true
+        },
+        "index": {
+            "MAGEOS_GIFTCARD_HISTORY_CREATED_AT": true
         }
     },
     "quote": {
@@ -60,6 +64,11 @@
             "giftcard_code": true,
             "base_giftcard_amount": true,
             "giftcard_amount": true
+        }
+    },
+    "sales_order_item": {
+        "column": {
+            "is_giftcard": true
         }
     },
     "sales_invoice": {

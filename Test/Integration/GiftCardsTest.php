@@ -240,6 +240,46 @@ class GiftCardsTest extends TestCase
     }
 
     /**
+     * What an order that was never saved took from a card is given back once, with nothing left to give after.
+     */
+    public function testDebitOfAnOrderNeverSavedIsGivenBackOnce(): void
+    {
+        $giftCards = Bootstrap::getObjectManager()->get(GiftCards::class);
+        $code = $giftCards->create(50.0);
+        $giftCards->debit($code, 20.0, '000099001');
+        $giftCards->debit($code, 5.0, '');
+
+        $debits = $giftCards->getDebitsBetween(
+            gmdate('Y-m-d H:i:s', time() - 3600),
+            gmdate('Y-m-d H:i:s', time() + 60)
+        );
+        $this->assertSame(
+            [['order_increment_id' => '000099001', 'code' => $code]],
+            array_values(array_filter($debits, fn (array $debit) => $debit['code'] === $code))
+        );
+
+        $this->assertSame(20.0, $giftCards->creditOrphan($code, '000099001'));
+        $this->assertSame(0.0, $giftCards->creditOrphan($code, '000099001'));
+        $this->assertSame(45.0, $giftCards->getBalance($code));
+    }
+
+    /**
+     * An order holds the value of its active cards, whatever was spent of them; lines know their cards.
+     */
+    public function testOrderHoldsItsActiveCards(): void
+    {
+        $giftCards = Bootstrap::getObjectManager()->get(GiftCards::class);
+        $spent = $giftCards->create(50.0, ['order_id' => 99003, 'order_item_id' => 99301]);
+        $disabled = $giftCards->create(50.0, ['order_id' => 99003, 'order_item_id' => 99301]);
+        $giftCards->debit($spent, 30.0, '000099002');
+        $giftCards->update($this->id($disabled), ['is_active' => false]);
+
+        $this->assertEqualsWithDelta(49.99, $giftCards->getHeldByOrder(99003), 0.0001);
+        $this->assertSame(0.0, $giftCards->getHeldByOrder(99004));
+        $this->assertSame([99301 => ['all' => 2, 'active' => 1]], $giftCards->countByOrderItems([99301, 99302]));
+    }
+
+    /**
      * Expiry from the configured validity, in months.
      */
     #[\Magento\TestFramework\Fixture\Config(GiftCards::XML_VALIDITY, '12')]

@@ -4,6 +4,7 @@ declare(strict_types=1);
 namespace MageOS\GiftCard\Test\Unit;
 
 use MageOS\GiftCard\Model\GiftCards;
+use MageOS\GiftCard\Model\Issuer;
 use MageOS\GiftCard\Model\Options;
 use MageOS\GiftCard\Observer\Issue;
 use Magento\Directory\Model\Currency;
@@ -37,6 +38,13 @@ class IssueTest extends TestCase
      * @var array<int, array{float, array<string, mixed>}>
      */
     private array $cards = [];
+
+    /**
+     * Cards the order line had already issued before the test.
+     *
+     * @var int
+     */
+    private int $issuedBefore = 0;
 
     /**
      * Order comments written.
@@ -113,6 +121,49 @@ class IssueTest extends TestCase
     }
 
     /**
+     * When fewer cards than units are left to issue, each is still worth one unit, not the whole line.
+     */
+    public function testCardOfAPartlyIssuedLineIsWorthOneUnit(): void
+    {
+        $this->issuedBefore = 2;
+        $issue = $this->issue();
+        $invoice = $this->invoice(3);
+
+        $issue->execute($this->event('sales_order_invoice_pay', $invoice));
+        $issue->execute($this->event('sales_order_invoice_save_commit_after', $invoice));
+
+        $this->assertSame([25.0], array_column($this->cards, 0));
+    }
+
+    /**
+     * The order line remembers that it sold a gift card: unflagging or deleting the product before the
+     * invoice is paid still issues the card.
+     */
+    public function testOrderLineRemembersItSoldAGiftCard(): void
+    {
+        $issue = $this->issue();
+        $invoice = $this->invoice(1);
+        $invoice->getAllItems()[0]->getData('order_item')->addData(['is_giftcard' => '1', 'product' => null]);
+
+        $issue->execute($this->event('sales_order_invoice_pay', $invoice));
+        $issue->execute($this->event('sales_order_invoice_save_commit_after', $invoice));
+
+        $this->assertSame(1, $this->createdCount());
+    }
+
+    /**
+     * The cron hands over how many cards each line still lacks: no more are issued, and the count goes down.
+     */
+    public function testNoMoreCardsThanTheLineLacks(): void
+    {
+        $missing = [9 => 1];
+
+        $issued = $this->issuer()->issue($this->invoice(3), $missing);
+
+        $this->assertSame([1, [9 => 0], [25.0]], [$issued, $missing, array_column($this->cards, 0)]);
+    }
+
+    /**
      * Saving an invoice that was not paid in this request creates nothing.
      */
     public function testCommitWithoutPaymentCreatesNothing(): void
@@ -142,19 +193,30 @@ class IssueTest extends TestCase
      */
     private function issue(?Emulation $emulation = null): Issue
     {
+        return new Issue($this->issuer($emulation));
+    }
+
+    /**
+     * Issuer with a fake gift card store and mailer.
+     *
+     * @param Emulation|null $emulation
+     * @return Issuer
+     */
+    private function issuer(?Emulation $emulation = null): Issuer
+    {
         $giftCards = $this->createStub(GiftCards::class);
         $giftCards->method('create')->willReturnCallback(function (float $balance, array $card): string {
             $this->cards[] = [$balance, $card];
             return 'CODE' . (++$this->created);
         });
-        $giftCards->method('countByOrderItem')->willReturnCallback(fn (): int => $this->created);
+        $giftCards->method('countByOrderItem')->willReturnCallback(fn (): int => $this->created + $this->issuedBefore);
         $giftCards->method('mask')->willReturnCallback(fn (string $code) => '…' . substr($code, -4));
         $transportBuilder = $this->createStub(TransportBuilder::class);
         foreach (['setTemplateIdentifier', 'setTemplateOptions', 'setTemplateVars', 'setFromByScope', 'addTo'] as $m) {
             $transportBuilder->method($m)->willReturnSelf();
         }
         $transportBuilder->method('getTransport')->willReturn($this->createStub(TransportInterface::class));
-        return new Issue(
+        return new Issuer(
             $giftCards,
             $transportBuilder,
             $this->createStub(LoggerInterface::class),

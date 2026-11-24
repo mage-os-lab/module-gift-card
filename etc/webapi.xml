@@ -1,0 +1,59 @@
+<?xml version="1.0"?>
+<routes xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:noNamespaceSchemaLocation="urn:magento:module:Magento_Webapi:etc/webapi.xsd">
+    <!-- codes travel in the request body, never in the URL: URLs end up in access logs, and a code is money -->
+    <route url="/V1/carts/mine/gift-cards" method="GET">
+        <service class="MageOS\GiftCard\Api\GiftCardManagementInterface" method="getList"/>
+        <resources>
+            <resource ref="self"/>
+        </resources>
+        <data>
+            <parameter name="cartId" force="true">%cart_id%</parameter>
+        </data>
+    </route>
+    <route url="/V1/carts/mine/gift-cards" method="POST">
+        <service class="MageOS\GiftCard\Api\GiftCardManagementInterface" method="apply"/>
+        <resources>
+            <resource ref="self"/>
+        </resources>
+        <data>
+            <parameter name="cartId" force="true">%cart_id%</parameter>
+        </data>
+    </route>
+    <route url="/V1/carts/mine/gift-cards/remove" method="POST">
+        <service class="MageOS\GiftCard\Api\GiftCardManagementInterface" method="remove"/>
+        <resources>
+            <resource ref="self"/>
+        </resources>
+        <data>
+            <parameter name="cartId" force="true">%cart_id%</parameter>
+        </data>
+    </route>
+    <route url="/V1/guest-carts/:cartId/gift-cards" method="GET">
+        <service class="MageOS\GiftCard\Api\GiftCardManagementInterface" method="getGuestList"/>
+        <resources>
+            <resource ref="anonymous"/>
+        </resources>
+    </route>
+    <route url="/V1/guest-carts/:cartId/gift-cards" method="POST">
+        <service class="MageOS\GiftCard\Api\GiftCardManagementInterface" method="applyToGuestCart"/>
+        <resources>
+            <resource ref="anonymous"/>
+        </resources>
+    </route>
+    <route url="/V1/guest-carts/:cartId/gift-cards/remove" method="POST">
+        <service class="MageOS\GiftCard\Api\GiftCardManagementInterface" method="removeFromGuestCart"/>
+        <resources>
+            <resource ref="anonymous"/>
+        </resources>
+    </route>
+    <route url="/V1/customers/me/gift-cards" method="GET">
+        <service class="MageOS\GiftCard\Api\GiftCardManagementInterface" method="getCustomerCards"/>
+        <resources>
+            <resource ref="self"/>
+        </resources>
+        <data>
+            <parameter name="customerId" force="true">%customer_id%</parameter>
+        </data>
+    </route>
+</routes>

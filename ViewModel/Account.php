@@ -39,14 +39,11 @@ class Account implements ArgumentInterface
     /**
      * Code shown in the account, shortened for a gift.
      *
-     * A gift's code went to the recipient's e-mail: someone who opened an account with that address first
-     * would see it otherwise. A card the customer bought for themselves shows whole.
-     *
      * @param array<string,mixed> $card
      */
     public function getCode(array $card): string
     {
-        return $card['recipient_email'] ? $this->giftCards->mask((string) $card['code']) : (string) $card['code'];
+        return $this->giftCards->ownerCode($card);
     }
 
     /**
@@ -66,10 +63,10 @@ class Account implements ArgumentInterface
      */
     public function getStatus(array $card): Phrase
     {
-        return match (true) {
-            !$card['is_active'] => __('Disabled'),
-            $card['expires_at'] && $card['expires_at'] <= gmdate('Y-m-d H:i:s') => __('Expired'),
-            (float) $card['balance'] <= 0 => __('Used up'),
+        return match ($this->giftCards->status($card)) {
+            'disabled' => __('Disabled'),
+            'expired' => __('Expired'),
+            'used_up' => __('Used up'),
             default => __('Active'),
         };
     }

@@ -123,3 +123,5 @@ Gift Card for a Recipient,Gift Card for a Recipient
 See Full Codes and E-mail Them,See Full Codes and E-mail Them
 Links are not allowed in the gift card names and message.,Links are not allowed in the gift card names and message.
 "The refunded gift cards were already spent for %1. Enter at least that amount as Adjustment Fee, or refund fewer of them.","The refunded gift cards were already spent for %1. Enter at least that amount as Adjustment Fee, or refund fewer of them."
+The order was never saved,The order was never saved
+"This refund would leave the customer with more than was paid: gift cards of this order worth %1 are still active. Refund the gift card lines with their quantities, or disable the cards first.","This refund would leave the customer with more than was paid: gift cards of this order worth %1 are still active. Refund the gift card lines with their quantities, or disable the cards first."

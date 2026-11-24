@@ -194,6 +194,47 @@ class ObserversTest extends TestCase
     }
 
     /**
+     * A refund by adjustment alone, with no quantity, disables no card: it is refused when the customer would
+     * keep active cards and money for more than was paid.
+     */
+    public function testAdjustmentRefundThatLeavesTheCardsActiveIsRefused(): void
+    {
+        $this->expectException(LocalizedException::class);
+        $this->refundByAdjustment(50.0, 50.0);
+    }
+
+    /**
+     * A goodwill adjustment on the rest of the order is still accepted.
+     */
+    public function testSmallAdjustmentRefundOnAMixedOrderIsAccepted(): void
+    {
+        $this->refundByAdjustment(80.0, 5.0);
+        $this->addToAssertionCount(1);
+    }
+
+    /**
+     * Credit memo without quantities on an order whose 50 gift card is still active.
+     *
+     * @param float $paid
+     * @param float $refunded by the order, this credit memo included
+     */
+    private function refundByAdjustment(float $paid, float $refunded): void
+    {
+        $giftCards = $this->createStub(GiftCards::class);
+        $giftCards->method('getHeldByOrder')->willReturn(50.0);
+        $order = $this->createStub(Order::class);
+        $order->method('getId')->willReturn(5);
+        $order->method('getBaseCurrency')->willReturn($this->currency());
+        $order->method('getBaseTotalPaid')->willReturn($paid);
+        $order->method('getBaseTotalRefunded')->willReturn($refunded);
+        $creditmemo = $this->createStub(Creditmemo::class);
+        $creditmemo->method('getOrder')->willReturn($order);
+        $creditmemo->method('getAllItems')->willReturn([]);
+
+        (new Revoke($giftCards))->execute(new Observer(['creditmemo' => $creditmemo]));
+    }
+
+    /**
      * Core also reports a failed checkout after the order was saved (a later observer threw): the order
      * stays, paid by the card, so nothing is given back.
      */

@@ -29,6 +29,8 @@ class GiftCards
 
     public const XML_VALIDITY = 'mageos_giftcard/general/validity_months';
     public const MAX_SEND_ATTEMPTS = 5;
+    /** Gift e-mails sent per cron run. */
+    public const SEND_BATCH = 100;
     /** Days an expired card can be used again after an order gives money back to it. */
     public const CREDIT_GRACE_DAYS = 30;
     /** Admins without this resource see only the end of the codes: a code is all it takes to spend a card. */
@@ -149,12 +151,14 @@ class GiftCards
      * @param float $amount
      * @param string|null $orderNumber order refunded or canceled
      * @param string $action REFUNDED or CANCELED
+     * @param string|null $comment
      */
     public function credit(
         string $code,
         float $amount,
         ?string $orderNumber = null,
-        string $action = self::REFUNDED
+        string $action = self::REFUNDED,
+        ?string $comment = null
     ): bool {
         $connection = $this->resource->getConnection();
         $connection->beginTransaction();
@@ -166,7 +170,7 @@ class GiftCards
                 $where
             );
             if ($credited) {
-                $this->log($where, $action, $amount, $orderNumber);
+                $this->log($where, $action, $amount, $orderNumber, null, $comment);
                 $expires = gmdate('Y-m-d H:i:s', time() + self::CREDIT_GRACE_DAYS * 86400);
                 $extended = $connection->update(
                     $this->table(),
@@ -207,6 +211,76 @@ class GiftCards
                 ->where('h.action IN (?)', [self::USED, self::REFUNDED, self::CANCELED])
         );
         return is_numeric($sum) ? max(0.0, -(float) $sum) : null;
+    }
+
+    /**
+     * Cards debited for an order between two dates, to check that the order exists.
+     *
+     * @param string $from UTC
+     * @param string $to UTC
+     * @return array<int, array{code: string, order_increment_id: string}>
+     */
+    public function getDebitsBetween(string $from, string $to): array
+    {
+        $connection = $this->resource->getConnection();
+        return $connection->fetchAll(
+            $connection->select()->distinct()
+                ->from(['h' => $this->resource->getTableName('mageos_giftcard_history')], ['order_increment_id'])
+                ->join(['c' => $this->table()], 'c.giftcard_id = h.giftcard_id', ['code'])
+                ->where('h.action = ?', self::USED)
+                // a debit without an order number cannot be matched to an order: it is never given back
+                ->where("h.order_increment_id <> ''")
+                ->where('h.created_at >= ?', $from)
+                ->where('h.created_at <= ?', $to)
+        );
+    }
+
+    /**
+     * Give back what an order that was never saved took from the card, and return the amount.
+     *
+     * The card row is locked while the history is read, so two runs cannot give the same debit back twice;
+     * once given back, the history shows nothing left to give.
+     *
+     * @param string $code
+     * @param string $orderNumber
+     * @return float 0 when the order took nothing, or all of it was given back already
+     */
+    public function creditOrphan(string $code, string $orderNumber): float
+    {
+        $connection = $this->resource->getConnection();
+        $connection->beginTransaction();
+        try {
+            $connection->fetchOne(
+                $connection->select()->from($this->table(), 'giftcard_id')->where('code = ?', $code)->forUpdate()
+            );
+            $used = (float) $this->getUsedByOrder($code, $orderNumber);
+            if ($used > 0) {
+                $this->credit($code, $used, $orderNumber, self::CANCELED, (string) __('The order was never saved'));
+            }
+            $connection->commit();
+        } catch (\Throwable $e) {
+            $connection->rollBack();
+            throw $e;
+        }
+        return $used;
+    }
+
+    /**
+     * What the customer still holds in active cards issued by the order: their value when issued.
+     *
+     * A cent per card is left out, as each card's value was rounded to cents.
+     *
+     * @param int $orderId
+     */
+    public function getHeldByOrder(int $orderId): float
+    {
+        $connection = $this->resource->getConnection();
+        return max(0.0, (float) $connection->fetchOne(
+            $connection->select()
+                ->from($this->table(), new Expression('SUM(initial_balance) - 0.01 * COUNT(*)'))
+                ->where('order_id = ?', $orderId)
+                ->where('is_active = 1')
+        ));
     }
 
     /**
@@ -318,7 +392,32 @@ class GiftCards
     }
 
     /**
-     * Cards whose gift e-mail is due.
+     * Cards issued by each order line, all of them and the active ones; a line without cards is absent.
+     *
+     * @param int[] $orderItemIds
+     * @return array<int, array{all: int, active: int}>
+     */
+    public function countByOrderItems(array $orderItemIds): array
+    {
+        if (!$orderItemIds) {
+            return [];
+        }
+        $connection = $this->resource->getConnection();
+        $counts = [];
+        $rows = $connection->fetchAll(
+            $connection->select()
+                ->from($this->table(), ['order_item_id', 'cards' => 'COUNT(*)', 'active' => 'SUM(is_active)'])
+                ->where('order_item_id IN (?)', $orderItemIds)
+                ->group('order_item_id')
+        );
+        foreach ($rows as $row) {
+            $counts[(int) $row['order_item_id']] = ['all' => (int) $row['cards'], 'active' => (int) $row['active']];
+        }
+        return $counts;
+    }
+
+    /**
+     * Cards whose gift e-mail is due, oldest send date first, SEND_BATCH at most.
      *
      * Spendable, with a recipient, send date reached, not sent yet, and fewer than MAX_SEND_ATTEMPTS failures.
      *
@@ -335,7 +434,7 @@ class GiftCards
         foreach ($this->spendable() as $condition => $value) {
             $select->where($condition, $value);
         }
-        return $connection->fetchAll($select);
+        return $connection->fetchAll($select->order('send_at')->limit(self::SEND_BATCH));
     }
 
     /**
@@ -383,6 +482,47 @@ class GiftCards
         $connection = $this->resource->getConnection();
         $card = $connection->fetchRow($connection->select()->from($this->table())->where('giftcard_id = ?', $id));
         return $card ?: null;
+    }
+
+    /**
+     * The card row of a code, whatever its state.
+     *
+     * @param string $code
+     * @return array<string, mixed>|null
+     */
+    public function getByCode(string $code): ?array
+    {
+        $connection = $this->resource->getConnection();
+        $card = $connection->fetchRow($connection->select()->from($this->table())->where('code = ?', $code));
+        return $card ?: null;
+    }
+
+    /**
+     * Code shown to the account that owns the card, shortened for a gift.
+     *
+     * A gift's code went to the recipient's e-mail: someone who opened an account with that address first
+     * would see it otherwise. A card the customer bought for themselves shows whole.
+     *
+     * @param array<string,mixed> $card
+     */
+    public function ownerCode(array $card): string
+    {
+        return $card['recipient_email'] ? $this->mask((string) $card['code']) : (string) $card['code'];
+    }
+
+    /**
+     * What can still be done with the card: "active", "disabled", "expired" or "used_up".
+     *
+     * @param array<string,mixed> $card
+     */
+    public function status(array $card): string
+    {
+        return match (true) {
+            !$card['is_active'] => 'disabled',
+            $card['expires_at'] && $card['expires_at'] <= gmdate('Y-m-d H:i:s') => 'expired',
+            (float) $card['balance'] <= 0 => 'used_up',
+            default => 'active',
+        };
     }
 
     /**
