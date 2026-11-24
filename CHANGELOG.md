@@ -2,11 +2,11 @@
 
 All notable changes to this module are documented here. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and versions follow [Semantic Versioning](https://semver.org/).
 
-## [Unreleased]
+## [2.1.0] - 2026-11-24
 
 Gift cards can be applied to a cart and listed over REST and GraphQL, and two cron jobs repair what a request that died half-way leaves behind: a card debited for an order that was never saved, a paid invoice that issued no card.
 
-Upgrade: `setup:upgrade` adds a column to `sales_order_item` and two indexes to the module's own tables; on a large shop, plan it like any change to the order tables. One behaviour changes: a credit memo is refused when it would leave the customer with active gift cards and refunded money for more than was paid (see *Changed*). Magento's cron must run for the two new jobs.
+Upgrade: the update adds a column to `sales_order_item` and two indexes to the module's own tables; on a large shop, plan it like any change to the order tables. One behaviour changes: a credit memo is refused when it would leave the customer with active gift cards and refunded money for more than was paid (see *Changed*). Magento's cron must run for the two new jobs.
 
 ### Added
 
@@ -25,6 +25,10 @@ Upgrade: `setup:upgrade` adds a column to `sales_order_item` and two indexes to 
 - An order line remembers that it sold a gift card: a product unflagged or deleted between the order and the payment of its invoice no longer leaves the customer without the card they paid for. Applies to orders placed from this version on.
 - When some of the cards of an invoice line were already issued, each remaining card got the value of the whole line instead of one unit.
 - The gift e-mails are sent by one cron run at a time, 100 per run: two runs overlapping could e-mail the same card twice.
+
+### Compatibility
+
+- REST and GraphQL: covered by unit tests of their shared rules, not yet called on a running store.
 
 ## [2.0.0] - 2026-11-23
 
