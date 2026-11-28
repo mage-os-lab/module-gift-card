@@ -18,7 +18,8 @@
             "send_at": true,
             "sent_at": true,
             "send_attempts": true,
-            "expires_at": true
+            "expires_at": true,
+            "reminded_at": true
         },
         "constraint": {
             "PRIMARY": true,
@@ -29,7 +30,8 @@
             "MAGEOS_GIFTCARD_CUSTOMER_ID": true,
             "MAGEOS_GIFTCARD_SEND_AT": true,
             "MAGEOS_GIFTCARD_SENT_AT_SEND_AT": true,
-            "MAGEOS_GIFTCARD_ORDER_ITEM_ID": true
+            "MAGEOS_GIFTCARD_ORDER_ITEM_ID": true,
+            "MAGEOS_GIFTCARD_EXPIRES_AT": true
         }
     },
     "mageos_giftcard_history": {

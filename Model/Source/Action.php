@@ -26,6 +26,7 @@ class Action implements OptionSourceInterface
             ['value' => GiftCards::ADJUSTED, 'label' => __('Balance changed')],
             ['value' => GiftCards::EXPIRY, 'label' => __('Expiry changed')],
             ['value' => GiftCards::SENT, 'label' => __('Code e-mailed')],
+            ['value' => GiftCards::REMINDED, 'label' => __('Expiry reminder e-mailed')],
             ['value' => GiftCards::ENABLED, 'label' => __('Enabled')],
             ['value' => GiftCards::DISABLED, 'label' => __('Disabled')],
         ];

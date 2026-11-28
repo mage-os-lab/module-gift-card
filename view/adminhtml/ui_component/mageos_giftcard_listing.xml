@@ -13,6 +13,10 @@
                 <class>primary</class>
                 <label translate="true">Add Gift Card</label>
             </button>
+            <button name="bulk">
+                <url path="*/*/bulk"/>
+                <label translate="true">Create in Bulk</label>
+            </button>
         </buttons>
         <spinner>mageos_giftcard_columns</spinner>
         <deps>

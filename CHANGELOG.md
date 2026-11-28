@@ -2,6 +2,34 @@
 
 All notable changes to this module are documented here. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and versions follow [Semantic Versioning](https://semver.org/).
 
+## [Unreleased]
+
+Upgrade: the update adds a column and an index to `mageos_giftcard`. Magento's cron must run for the new expiry reminder job, which does nothing until *Expiry Reminder (Days Before)* is set. Customer accounts deleted from now on have their personal data erased from their gift cards (see *Changed*).
+
+### Added
+
+- *Sales > Operations > Gift Cards > Create in Bulk*: create up to 1,000 cards at once, as a number of identical cards or one per line of a CSV file (balance, recipient, sender, message, send date, expiry), all or none. Admins allowed to see full codes download the list of the codes created. Uses the *Create Gift Cards* resource.
+- Expiry reminder: *Stores > Configuration > Sales > Gift Cards > Expiry Reminder (Days Before)* e-mails the holder of a card with a balance left, once, that many days before it expires (new e-mail template *Gift Card Expiry Reminder*, new cron job `mageos_giftcard_remind_expiry`, every hour). A reminder that fails to send is logged in `var/log/exception.log` and tried again by the next run. Recorded in the card's history once sent, without the address it went to. Only a guest order's e-mail address is used to find the holder: a card whose customer account was deleted is not reminded at the address left on its orders.
+- The gift e-mail to a recipient shows the image of the gift card product.
+- PayPal: the amount paid by gift card is sent as a *Gift Card* line, so that the lines PayPal receives add up to the amount to pay.
+
+### Changed
+
+- Deleting a customer account erases the personal data of its gift cards: owner, recipient, sender name and message of the cards it owned once delivered, its name as sender of the gifts it bought once delivered, its e-mail address in the history comments, and any address in the expiry reminder lines of its cards. Balances and the history of balance changes are kept, and a gift not e-mailed yet keeps what it needs to reach its recipient.
+- The balance of a card created in the admin is rounded to cents.
+
+### Fixed
+
+- The list of codes downloaded after a bulk creation gives the expiry date in the admin's time zone, as the grid does, instead of UTC (an expiry entered as 2027-06-30 in Los Angeles showed as 2027-07-01 06:59:59).
+- The list of codes downloaded after a bulk creation gives the expiry of cards created with the default validity (*Validity (Months)*) instead of leaving it empty.
+- The grid's CSV and Excel XML exports give the expiry, send, sent and creation dates in the admin's time zone, as the grid shows them, instead of UTC.
+
+### Compatibility
+
+- Admin, e-mails, cron and server-side events only: no change for Luma, Hyvä Theme, Hyvä Checkout, Loki Checkout or Elasticsuite.
+- PayPal line: written from core's PayPal source and covered by a unit test on core's payment cart, not run against PayPal. Requires `magento/module-payment`, part of every Magento install.
+- Bulk creation, reminder, e-mail image and erasure: covered by unit tests, and by integration tests that only CI runs; not run on a shop.
+
 ## [2.1.0] - 2026-11-24
 
 Gift cards can be applied to a cart and listed over REST and GraphQL, and two cron jobs repair what a request that died half-way leaves behind: a card debited for an order that was never saved, a paid invoice that issued no card.

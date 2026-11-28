@@ -125,3 +125,24 @@ Links are not allowed in the gift card names and message.,Links sind in den Name
 "The refunded gift cards were already spent for %1. Enter at least that amount as Adjustment Fee, or refund fewer of them.",Die erstatteten Geschenkkarten wurden bereits in Höhe von %1 eingelöst. Geben Sie mindestens diesen Betrag als Korrekturgebühr ein oder erstatten Sie weniger Karten.
 The order was never saved,Die Bestellung wurde nie gespeichert
 "This refund would leave the customer with more than was paid: gift cards of this order worth %1 are still active. Refund the gift card lines with their quantities, or disable the cards first.","Mit dieser Erstattung bliebe dem Kunden mehr, als bezahlt wurde: Geschenkkarten dieser Bestellung im Wert von %1 sind noch aktiv. Erstatten Sie die Geschenkkarten-Positionen mit ihren Mengen oder deaktivieren Sie zuerst die Karten."
+Create Gift Cards in Bulk,Geschenkkarten in großer Menge erstellen
+Create in Bulk,In großer Menge erstellen
+%1 gift cards were created.,%1 Geschenkkarten wurden erstellt.
+Upload a CSV file of 2 MB at most.,Laden Sie eine CSV-Datei von höchstens 2 MB hoch.
+A file can create %1 gift cards at most. Split it.,Eine Datei kann höchstens %1 Geschenkkarten erstellen. Teilen Sie sie auf.
+Enter a number of gift cards between 1 and %1.,Geben Sie eine Anzahl an Geschenkkarten zwischen 1 und %1 ein.
+Line %1: %2,Zeile %1: %2
+The file has no gift card to create.,Die Datei enthält keine zu erstellende Geschenkkarte.
+"The first line of the file must name its columns, among: %1.","Die erste Zeile der Datei muss ihre Spalten benennen, aus: %1."
+Expiry reminder e-mailed,Ablauferinnerung per E-Mail gesendet
+"All cards are created, or none. With the right to see full codes, their list is downloaded.","Es werden alle Karten erstellt oder keine. Mit der Berechtigung, vollständige Codes zu sehen, wird ihre Liste heruntergeladen."
+"Identical cards, without recipient. Ignored when a file is chosen.","Identische Karten ohne Empfänger. Wird ignoriert, wenn eine Datei gewählt ist."
+In base currency. With a file: for the lines without a balance.,In Basiswährung. Mit einer Datei: für die Zeilen ohne Guthaben.
+Number of Cards,Anzahl der Karten
+"One card per line, %1 at most. First line: the column names, among %2.","Eine Karte pro Zeile, höchstens %1. Erste Zeile: die Spaltennamen, aus %2."
+Or a CSV File,Oder eine CSV-Datei
+Expiry Reminder (Days Before),Ablauferinnerung (Tage vorher)
+"E-mail the holder of a card with a balance left this many days before it expires, once. Empty: no reminder.",Sendet dem Inhaber einer Karte mit Restguthaben so viele Tage vor dem Ablauf einmalig eine E-Mail. Leer: keine Erinnerung.
+Gift Card Expiry Reminder,Ablauferinnerung für Geschenkkarten
+Your gift card expires soon,Ihre Geschenkkarte läuft bald ab
+Your gift card ending in %code still holds %amount.,Auf Ihrer Geschenkkarte mit der Endung %code sind noch %amount Guthaben.

@@ -15,6 +15,12 @@
                     <comment>Months a new gift card can be used. Empty: cards never expire. Check the minimum validity your country requires before setting one. Cards already issued keep their expiry.</comment>
                     <validate>validate-digits validate-zero-or-greater</validate>
                 </field>
+                <field id="expiry_reminder_days" translate="label comment" type="text" sortOrder="20"
+                       showInDefault="1" showInWebsite="0" showInStore="0">
+                    <label>Expiry Reminder (Days Before)</label>
+                    <comment>E-mail the holder of a card with a balance left this many days before it expires, once. Empty: no reminder.</comment>
+                    <validate>validate-digits validate-zero-or-greater</validate>
+                </field>
             </group>
         </section>
     </system>

@@ -125,3 +125,24 @@ Links are not allowed in the gift card names and message.,Links are not allowed 
 "The refunded gift cards were already spent for %1. Enter at least that amount as Adjustment Fee, or refund fewer of them.","The refunded gift cards were already spent for %1. Enter at least that amount as Adjustment Fee, or refund fewer of them."
 The order was never saved,The order was never saved
 "This refund would leave the customer with more than was paid: gift cards of this order worth %1 are still active. Refund the gift card lines with their quantities, or disable the cards first.","This refund would leave the customer with more than was paid: gift cards of this order worth %1 are still active. Refund the gift card lines with their quantities, or disable the cards first."
+Create Gift Cards in Bulk,Create Gift Cards in Bulk
+Create in Bulk,Create in Bulk
+%1 gift cards were created.,%1 gift cards were created.
+Upload a CSV file of 2 MB at most.,Upload a CSV file of 2 MB at most.
+A file can create %1 gift cards at most. Split it.,A file can create %1 gift cards at most. Split it.
+Enter a number of gift cards between 1 and %1.,Enter a number of gift cards between 1 and %1.
+Line %1: %2,Line %1: %2
+The file has no gift card to create.,The file has no gift card to create.
+"The first line of the file must name its columns, among: %1.","The first line of the file must name its columns, among: %1."
+Expiry reminder e-mailed,Expiry reminder e-mailed
+"All cards are created, or none. With the right to see full codes, their list is downloaded.","All cards are created, or none. With the right to see full codes, their list is downloaded."
+"Identical cards, without recipient. Ignored when a file is chosen.","Identical cards, without recipient. Ignored when a file is chosen."
+In base currency. With a file: for the lines without a balance.,In base currency. With a file: for the lines without a balance.
+Number of Cards,Number of Cards
+"One card per line, %1 at most. First line: the column names, among %2.","One card per line, %1 at most. First line: the column names, among %2."
+Or a CSV File,Or a CSV File
+Expiry Reminder (Days Before),Expiry Reminder (Days Before)
+"E-mail the holder of a card with a balance left this many days before it expires, once. Empty: no reminder.","E-mail the holder of a card with a balance left this many days before it expires, once. Empty: no reminder."
+Gift Card Expiry Reminder,Gift Card Expiry Reminder
+Your gift card expires soon,Your gift card expires soon
+Your gift card ending in %code still holds %amount.,Your gift card ending in %code still holds %amount.
