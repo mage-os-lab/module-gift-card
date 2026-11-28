@@ -35,4 +35,10 @@
     <event name="sales_order_invoice_save_commit_after">
         <observer name="mageos_giftcard_issue" instance="MageOS\GiftCard\Observer\Issue"/>
     </event>
+    <event name="payment_cart_collect_items_and_amounts">
+        <observer name="mageos_giftcard_payment_cart_line" instance="MageOS\GiftCard\Observer\AddPaymentCartLine"/>
+    </event>
+    <event name="customer_delete_before">
+        <observer name="mageos_giftcard_forget_customer" instance="MageOS\GiftCard\Observer\ForgetCustomer"/>
+    </event>
 </config>

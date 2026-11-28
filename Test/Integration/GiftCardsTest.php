@@ -178,6 +178,109 @@ class GiftCardsTest extends TestCase
     }
 
     /**
+     * Deleting a customer's data keeps every balance and history amount; a gift not sent yet keeps its recipient.
+     */
+    public function testForgettingACustomerKeepsBalancesAndHistory(): void
+    {
+        $objectManager = Bootstrap::getObjectManager();
+        $giftCards = $objectManager->get(GiftCards::class);
+        $delivered = $giftCards->create(40.0, [
+            'customer_id' => 9001,
+            'recipient_email' => 'gone@example.com',
+            'recipient_name' => 'Gone',
+            'sender_name' => 'Max',
+            'message' => 'Hi',
+            'send_at' => gmdate('Y-m-d H:i:s', time() - 60),
+        ]);
+        $giftCards->markSent($this->id($delivered), 'gone@example.com');
+        $giftCards->debit($delivered, 15.0, '000000020');
+        $pending = $giftCards->create(10.0, [
+            'customer_id' => 9001,
+            'recipient_email' => 'gone@example.com',
+            'send_at' => gmdate('Y-m-d H:i:s', time() + 86400),
+        ]);
+        $resource = $objectManager->get(ResourceConnection::class);
+        $connection = $resource->getConnection();
+        $history = fn (string $code): array => $connection->fetchAll(
+            $connection->select()
+                ->from($resource->getTableName('mageos_giftcard_history'), ['action', 'amount', 'balance'])
+                ->where('giftcard_id = ?', $this->id($code))
+                ->order('history_id')
+        );
+        $before = $history($delivered);
+
+        $giftCards->forgetCustomer(9001, 'gone@example.com');
+
+        $card = $giftCards->getByCode($delivered);
+        $this->assertSame(
+            [25.0, null, null, null, null, null],
+            [(float) $card['balance'], $card['customer_id'], $card['recipient_email'], $card['recipient_name'],
+                $card['sender_name'], $card['message']]
+        );
+        $this->assertSame(25.0, $giftCards->getBalance($delivered));
+        $this->assertSame($before, $history($delivered));
+        $this->assertNotContains('gone@example.com', $connection->fetchCol(
+            $connection->select()->from($resource->getTableName('mageos_giftcard_history'), 'comment')
+                ->where('giftcard_id = ?', $this->id($delivered))
+        ));
+        $this->assertSame('gone@example.com', $giftCards->getByCode($pending)['recipient_email']);
+        $this->assertSame(10.0, $giftCards->getBalance($pending));
+    }
+
+    /**
+     * The expiry reminder goes to the guest who bought a card, never to the address left on the order of a
+     * deleted account (core empties sales_order.customer_id and keeps customer_email and customer_is_guest = 0).
+     */
+    public function testExpiryReminderNeverReachesADeletedAccountThroughItsOrder(): void
+    {
+        $objectManager = Bootstrap::getObjectManager();
+        $giftCards = $objectManager->get(GiftCards::class);
+        $resource = $objectManager->get(ResourceConnection::class);
+        $connection = $resource->getConnection();
+        $order = function (string $email, int $guest) use ($connection, $resource): int {
+            $connection->insert($resource->getTableName('sales_order'), [
+                'customer_id' => null,
+                'customer_email' => $email,
+                'customer_is_guest' => $guest,
+                'total_item_count' => 1,
+            ]);
+            return (int) $connection->lastInsertId($resource->getTableName('sales_order'));
+        };
+        $soon = gmdate('Y-m-d H:i:s', time() + 5 * 86400);
+        $deleted = $giftCards->create(10.0, ['order_id' => $order('gone@example.com', 0), 'expires_at' => $soon]);
+        $guest = $giftCards->create(10.0, ['order_id' => $order('guest@example.com', 1), 'expires_at' => $soon]);
+
+        $emails = array_column($giftCards->getExpiring(15), 'reminder_email', 'giftcard_id');
+
+        $this->assertArrayNotHasKey($this->id($deleted), $emails);
+        $this->assertSame('guest@example.com', $emails[$this->id($guest)] ?? null);
+    }
+
+    /**
+     * A batch whose last card cannot be created leaves none of its cards.
+     *
+     * Without the test's own transaction: inside it, the batch's rollback would not undo anything yet.
+     */
+    #[DbIsolation(false)]
+    public function testFailedBatchCreatesNoCard(): void
+    {
+        $objectManager = Bootstrap::getObjectManager();
+        $giftCards = $objectManager->get(GiftCards::class);
+        $resource = $objectManager->get(ResourceConnection::class);
+        $count = fn (): int => (int) $resource->getConnection()->fetchOne(
+            $resource->getConnection()->select()->from($resource->getTableName('mageos_giftcard'), 'COUNT(*)')
+        );
+        $before = $count();
+
+        try {
+            $giftCards->createBatch([[10.0, []], [20.0, ['no_such_column' => 1]]]);
+            $this->fail('The batch should fail.');
+        } catch (\Exception) {
+            $this->assertSame($before, $count());
+        }
+    }
+
+    /**
      * An expired card cannot be spent; the admin can extend it.
      */
     public function testExpiredCardCannotBeSpent(): void

@@ -1,0 +1,94 @@
+<?php
+declare(strict_types=1);
+
+/** @var \MageOS\GiftCard\Block\Adminhtml\Card $block */
+/** @var \Magento\Framework\Escaper $escaper */
+$max = \MageOS\GiftCard\Model\AdminCards::MAX_CARDS;
+?>
+<form action="<?= $escaper->escapeUrl($block->getUrl('*/*/bulkCreate')) ?>" method="post"
+      enctype="multipart/form-data" class="admin__fieldset">
+    <?= /* @noEscape */ $block->getBlockHtml('formkey') ?>
+    <div class="admin__field _required">
+        <label class="admin__field-label" for="giftcard-store">
+            <span><?= $escaper->escapeHtml(__('Store View')) ?></span>
+        </label>
+        <div class="admin__field-control">
+            <select class="admin__control-select" id="giftcard-store" name="store_id" required>
+                <?php foreach ($block->getStoreOptions() as $website): ?>
+                    <?php if (is_array($website['value'])): ?>
+                        <optgroup label="<?= $escaper->escapeHtmlAttr($website['label']) ?>">
+                            <?php foreach ($website['value'] as $store): ?>
+                                <option value="<?= (int) $store['value'] ?>">
+                                    <?= $escaper->escapeHtml(trim((string) $store['label'])) ?>
+                                </option>
+                            <?php endforeach; ?>
+                        </optgroup>
+                    <?php endif; ?>
+                <?php endforeach; ?>
+            </select>
+            <div class="admin__field-note">
+                <?= $escaper->escapeHtml(__('Language and sender of the e-mail, and account of the recipient.')) ?>
+            </div>
+        </div>
+    </div>
+    <div class="admin__field">
+        <label class="admin__field-label" for="giftcard-amount">
+            <span><?= $escaper->escapeHtml(__('Balance')) ?></span>
+        </label>
+        <div class="admin__field-control">
+            <input class="admin__control-text" type="number" id="giftcard-amount" name="balance" min="0.01"
+                   step="0.01">
+            <div class="admin__field-note">
+                <?= $escaper->escapeHtml(__('In base currency. With a file: for the lines without a balance.')) ?>
+            </div>
+        </div>
+    </div>
+    <div class="admin__field">
+        <label class="admin__field-label" for="giftcard-expires">
+            <span><?= $escaper->escapeHtml(__('Expires On')) ?></span>
+        </label>
+        <div class="admin__field-control">
+            <input class="admin__control-text" type="date" id="giftcard-expires" name="expires_date">
+            <div class="admin__field-note">
+                <?= $escaper->escapeHtml(__('Empty: the validity set in the configuration.')) ?>
+            </div>
+        </div>
+    </div>
+    <div class="admin__field">
+        <label class="admin__field-label" for="giftcard-count">
+            <span><?= $escaper->escapeHtml(__('Number of Cards')) ?></span>
+        </label>
+        <div class="admin__field-control">
+            <input class="admin__control-text" type="number" id="giftcard-count" name="count" min="1"
+                   max="<?= (int) $max ?>" step="1">
+            <div class="admin__field-note">
+                <?= $escaper->escapeHtml(__('Identical cards, without recipient. Ignored when a file is chosen.')) ?>
+            </div>
+        </div>
+    </div>
+    <div class="admin__field">
+        <label class="admin__field-label" for="giftcard-file">
+            <span><?= $escaper->escapeHtml(__('Or a CSV File')) ?></span>
+        </label>
+        <div class="admin__field-control">
+            <input type="file" id="giftcard-file" name="csv_file" accept=".csv,text/csv">
+            <div class="admin__field-note">
+                <?= $escaper->escapeHtml(__(
+                    'One card per line, %1 at most. First line: the column names, among %2.',
+                    $max,
+                    implode(', ', \MageOS\GiftCard\Model\AdminCards::COLUMNS)
+                )) ?>
+            </div>
+        </div>
+    </div>
+    <div class="admin__field">
+        <div class="admin__field-control">
+            <button type="submit" class="action-primary"><?= $escaper->escapeHtml(__('Create Gift Cards')) ?></button>
+            <div class="admin__field-note">
+                <?= $escaper->escapeHtml(__(
+                    'All cards are created, or none. With the right to see full codes, their list is downloaded.'
+                )) ?>
+            </div>
+        </div>
+    </div>
+</form>

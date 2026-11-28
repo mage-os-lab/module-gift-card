@@ -15,5 +15,9 @@
              method="execute">
             <schedule>23 * * * *</schedule>
         </job>
+        <!-- e-mails the holders of cards about to expire, once per card -->
+        <job name="mageos_giftcard_remind_expiry" instance="MageOS\GiftCard\Cron\RemindExpiry" method="execute">
+            <schedule>41 * * * *</schedule>
+        </job>
     </group>
 </config>

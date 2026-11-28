@@ -5,10 +5,12 @@ namespace MageOS\GiftCard\Test\Unit;
 
 use MageOS\GiftCard\Cron\GiveBackOrphans;
 use MageOS\GiftCard\Cron\IssueMissing;
+use MageOS\GiftCard\Cron\RemindExpiry;
 use MageOS\GiftCard\Cron\SendGifts;
 use MageOS\GiftCard\Model\GiftCards;
 use MageOS\GiftCard\Model\Issuer;
 use MageOS\GiftCard\Model\Mailer;
+use Magento\Framework\App\Config\ScopeConfigInterface;
 use Magento\Framework\App\ResourceConnection;
 use Magento\Framework\DB\Adapter\AdapterInterface;
 use Magento\Framework\DB\Select;
@@ -67,6 +69,7 @@ class CronTest extends TestCase
         $giftCards = $this->createMock(GiftCards::class);
         $giftCards->expects($this->never())->method('getDue');
         $giftCards->expects($this->never())->method('getDebitsBetween');
+        $giftCards->expects($this->never())->method('getExpiring');
         $resource = $this->createMock(ResourceConnection::class);
         $resource->expects($this->never())->method('getConnection');
         $logger = $this->createStub(LoggerInterface::class);
@@ -75,6 +78,73 @@ class CronTest extends TestCase
         (new SendGifts($giftCards, $this->createStub(Mailer::class), $lock))->execute();
         (new GiveBackOrphans($giftCards, $resource, $lock, $logger))->execute();
         $this->issueMissing($giftCards, $resource, $lock)->execute();
+        (new RemindExpiry($giftCards, $this->createStub(Mailer::class), $lock, $this->config('15')))->execute();
+    }
+
+    /**
+     * Each expiring card is reminded once: a card another run already claimed is not e-mailed again.
+     */
+    public function testExpiryReminderIsSentOncePerCard(): void
+    {
+        $giftCards = $this->createStub(GiftCards::class);
+        $giftCards->method('getExpiring')->willReturn([
+            ['giftcard_id' => 1, 'reminder_email' => 'zoe@example.com'],
+            ['giftcard_id' => 2, 'reminder_email' => 'max@example.com'],
+        ]);
+        $giftCards->method('claimReminder')->willReturnCallback(fn (int $id): bool => $id === 1);
+        $sent = [];
+        $mailer = $this->createStub(Mailer::class);
+        $mailer->method('remind')->willReturnCallback(function (array $card, string $email) use (&$sent): bool {
+            $sent[] = $email;
+            return true;
+        });
+
+        (new RemindExpiry($giftCards, $mailer, $this->lock(true), $this->config('15')))->execute();
+
+        $this->assertSame(['zoe@example.com'], $sent);
+    }
+
+    /**
+     * A reminder whose e-mail fails is released, so the next run sends it; a reminder sent is kept.
+     */
+    public function testFailedExpiryReminderIsSentAgainByTheNextRun(): void
+    {
+        $giftCards = $this->createMock(GiftCards::class);
+        $giftCards->method('getExpiring')->willReturn([
+            ['giftcard_id' => 1, 'reminder_email' => 'zoe@example.com'],
+            ['giftcard_id' => 2, 'reminder_email' => 'max@example.com'],
+        ]);
+        $giftCards->method('claimReminder')->willReturn(true);
+        $giftCards->expects($this->once())->method('releaseReminder')->with(1);
+        $mailer = $this->createStub(Mailer::class);
+        $mailer->method('remind')->willReturnCallback(fn (array $card): bool => $card['giftcard_id'] === 2);
+
+        (new RemindExpiry($giftCards, $mailer, $this->lock(true), $this->config('15')))->execute();
+    }
+
+    /**
+     * Without a number of days in the configuration, no reminder is looked for.
+     */
+    public function testNoExpiryReminderWhenNotConfigured(): void
+    {
+        $giftCards = $this->createMock(GiftCards::class);
+        $giftCards->expects($this->never())->method('getExpiring');
+
+        (new RemindExpiry($giftCards, $this->createStub(Mailer::class), $this->lock(true), $this->config('')))
+            ->execute();
+    }
+
+    /**
+     * Configuration with this number of reminder days.
+     *
+     * @param string $days
+     * @return ScopeConfigInterface
+     */
+    private function config(string $days): ScopeConfigInterface
+    {
+        $config = $this->createStub(ScopeConfigInterface::class);
+        $config->method('getValue')->willReturn($days);
+        return $config;
     }
 
     /**

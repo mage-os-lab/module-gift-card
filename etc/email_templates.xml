@@ -5,4 +5,6 @@
               module="MageOS_GiftCard" area="frontend"/>
     <template id="mageos_giftcard_gift" label="Gift Card for a Recipient" file="gift.html" type="html"
               module="MageOS_GiftCard" area="frontend"/>
+    <template id="mageos_giftcard_expiry" label="Gift Card Expiry Reminder" file="expiry.html" type="html"
+              module="MageOS_GiftCard" area="frontend"/>
 </config>

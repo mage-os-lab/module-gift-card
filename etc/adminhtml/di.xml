@@ -1,0 +1,17 @@
+<?xml version="1.0"?>
+<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:noNamespaceSchemaLocation="urn:magento:framework:ObjectManager/etc/config.xsd">
+    <!-- the grid's CSV and XML exports give these dates in the admin's time zone, as the grid shows them -->
+    <type name="Magento\Ui\Model\Export\MetadataProvider">
+        <arguments>
+            <argument name="data" xsi:type="array">
+                <item name="mageos_giftcard_listing" xsi:type="array">
+                    <item name="expires_at" xsi:type="string">expires_at</item>
+                    <item name="send_at" xsi:type="string">send_at</item>
+                    <item name="sent_at" xsi:type="string">sent_at</item>
+                    <item name="created_at" xsi:type="string">created_at</item>
+                </item>
+            </argument>
+        </arguments>
+    </type>
+</config>

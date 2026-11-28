@@ -24,6 +24,8 @@
         <column xsi:type="smallint" name="send_attempts" unsigned="true" nullable="false" default="0"
                 comment="Failed e-mails to the recipient"/>
         <column xsi:type="datetime" name="expires_at" nullable="true" comment="Expiry (UTC), null for none"/>
+        <column xsi:type="datetime" name="reminded_at" nullable="true"
+                comment="When the expiry reminder was sent (UTC)"/>
         <column xsi:type="timestamp" name="created_at" on_update="false" nullable="false" default="CURRENT_TIMESTAMP"
                 comment="Created at"/>
         <constraint xsi:type="primary" referenceId="PRIMARY">
@@ -44,6 +46,9 @@
         <index referenceId="MAGEOS_GIFTCARD_SENT_AT_SEND_AT" indexType="btree">
             <column name="sent_at"/>
             <column name="send_at"/>
+        </index>
+        <index referenceId="MAGEOS_GIFTCARD_EXPIRES_AT" indexType="btree">
+            <column name="expires_at"/>
         </index>
     </table>
     <table name="mageos_giftcard_history" resource="default" engine="innodb" comment="Gift card balance changes">

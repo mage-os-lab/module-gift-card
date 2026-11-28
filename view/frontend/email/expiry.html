@@ -1,0 +1,15 @@
+<!--@subject {{trans "Your gift card expires soon"}} @-->
+<!--@vars {
+"var code":"End of the gift card code",
+"var amount":"Balance",
+"var recipient_name":"Recipient name",
+"var expires":"Expiry date"
+} @-->
+{{template config_path="design/email/header_template"}}
+
+{{depend recipient_name}}<p>{{trans "Hello %name," name=$recipient_name}}</p>{{/depend}}
+<p>{{trans "Your gift card ending in %code still holds %amount." code=$code amount=$amount}}</p>
+<p>{{trans "Use it before %date." date=$expires}}</p>
+<p>{{trans "Enter the code in the cart to use it. Any unused balance stays on the card."}}</p>
+
+{{template config_path="design/email/footer_template"}}

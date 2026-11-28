@@ -125,3 +125,24 @@ Links are not allowed in the gift card names and message.,No se permiten enlaces
 "The refunded gift cards were already spent for %1. Enter at least that amount as Adjustment Fee, or refund fewer of them.","Las tarjetas regalo reembolsadas ya se han gastado por %1. Introduce al menos ese importe como cargo de ajuste, o reembolsa menos tarjetas."
 The order was never saved,El pedido nunca se guardó
 "This refund would leave the customer with more than was paid: gift cards of this order worth %1 are still active. Refund the gift card lines with their quantities, or disable the cards first.","Este reembolso dejaría al cliente con más de lo que se pagó: las tarjetas regalo de este pedido, por valor de %1, siguen activas. Reembolsa las líneas de tarjeta regalo con sus cantidades, o desactiva primero las tarjetas."
+Create Gift Cards in Bulk,Crear tarjetas regalo en lote
+Create in Bulk,Crear en lote
+%1 gift cards were created.,Se han creado %1 tarjetas regalo.
+Upload a CSV file of 2 MB at most.,Sube un archivo CSV de 2 MB como máximo.
+A file can create %1 gift cards at most. Split it.,Un archivo puede crear %1 tarjetas regalo como máximo. Divídelo.
+Enter a number of gift cards between 1 and %1.,Introduce un número de tarjetas regalo entre 1 y %1.
+Line %1: %2,Línea %1: %2
+The file has no gift card to create.,El archivo no contiene ninguna tarjeta regalo que crear.
+"The first line of the file must name its columns, among: %1.","La primera línea del archivo debe nombrar sus columnas, entre: %1."
+Expiry reminder e-mailed,Recordatorio de caducidad enviado por e-mail
+"All cards are created, or none. With the right to see full codes, their list is downloaded.","Se crean todas las tarjetas, o ninguna. Con el permiso para ver los códigos completos, se descarga su lista."
+"Identical cards, without recipient. Ignored when a file is chosen.","Tarjetas idénticas, sin destinatario. Se ignora si se elige un archivo."
+In base currency. With a file: for the lines without a balance.,En moneda base. Con un archivo: para las líneas sin saldo.
+Number of Cards,Número de tarjetas
+"One card per line, %1 at most. First line: the column names, among %2.","Una tarjeta por línea, %1 como máximo. Primera línea: los nombres de las columnas, entre %2."
+Or a CSV File,O un archivo CSV
+Expiry Reminder (Days Before),Recordatorio de caducidad (días antes)
+"E-mail the holder of a card with a balance left this many days before it expires, once. Empty: no reminder.","Envía un e-mail al titular de una tarjeta con saldo restante este número de días antes de que caduque, una sola vez. Vacío: sin recordatorio."
+Gift Card Expiry Reminder,Recordatorio de caducidad de tarjeta regalo
+Your gift card expires soon,Tu tarjeta regalo caduca pronto
+Your gift card ending in %code still holds %amount.,A tu tarjeta regalo que termina en %code aún le quedan %amount.

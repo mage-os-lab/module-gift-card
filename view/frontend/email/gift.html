@@ -5,11 +5,14 @@
 "var sender_name":"Sender name",
 "var recipient_name":"Recipient name",
 "var message|escape|nl2br":"Gift message",
-"var expires":"Expiry date"
+"var expires":"Expiry date",
+"var image":"Image URL of the gift card product",
+"var product_name":"Name of the gift card product"
 } @-->
 {{template config_path="design/email/header_template"}}
 
 {{depend recipient_name}}<p>{{trans "Hello %name," name=$recipient_name}}</p>{{/depend}}
+{{depend image}}<p><img src="{{var image}}" alt="{{var product_name}}" width="300" style="max-width:100%;height:auto;"></p>{{/depend}}
 {{if sender_name}}
 <p>{{trans "%sender sent you a gift card worth %amount." sender=$sender_name amount=$amount}}</p>
 {{else}}

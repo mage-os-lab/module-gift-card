@@ -26,8 +26,10 @@ class GiftCards
     public const ENABLED = 'enabled';
     public const DISABLED = 'disabled';
     public const SENT = 'sent';
+    public const REMINDED = 'reminded';
 
     public const XML_VALIDITY = 'mageos_giftcard/general/validity_months';
+    public const XML_REMINDER_DAYS = 'mageos_giftcard/general/expiry_reminder_days';
     public const MAX_SEND_ATTEMPTS = 5;
     /** Gift e-mails sent per cron run. */
     public const SEND_BATCH = 100;
@@ -93,6 +95,49 @@ class GiftCards
         );
         $this->log(['code = ?' => $code], self::ISSUED, $balance, $orderNumber, $adminUser);
         return $code;
+    }
+
+    /**
+     * The cards, with the configured validity set on those without "expires_at", computed once for all.
+     *
+     * Lets the caller know the expiry each card is created with, e.g. for the list of codes of a batch.
+     *
+     * @param array<int,array{float,array<string,mixed>}> $cards balance and other columns, as create() takes
+     * @return array<int,array{float,array<string,mixed>}>
+     */
+    public function withValidity(array $cards): array
+    {
+        $expires = $this->validityEnd();
+        foreach ($cards as &$card) {
+            $card[1] += ['expires_at' => $expires];
+        }
+        return $cards;
+    }
+
+    /**
+     * Create several cards at once, all of them or none.
+     *
+     * A batch stopped half-way would leave the admin without the list of the codes created.
+     *
+     * @param array<int,array{float,array<string,mixed>}> $cards balance and other columns, as create() takes
+     * @param string|null $adminUser
+     * @return string[] the codes, in the order of $cards
+     */
+    public function createBatch(array $cards, ?string $adminUser = null): array
+    {
+        $connection = $this->resource->getConnection();
+        $connection->beginTransaction();
+        try {
+            $codes = [];
+            foreach ($cards as [$balance, $card]) {
+                $codes[] = $this->create($balance, $card, null, $adminUser);
+            }
+            $connection->commit();
+        } catch (\Throwable $e) {
+            $connection->rollBack();
+            throw $e;
+        }
+        return $codes;
     }
 
     /**
@@ -174,7 +219,7 @@ class GiftCards
                 $expires = gmdate('Y-m-d H:i:s', time() + self::CREDIT_GRACE_DAYS * 86400);
                 $extended = $connection->update(
                     $this->table(),
-                    ['expires_at' => $expires],
+                    ['expires_at' => $expires, 'reminded_at' => null],
                     $where + ['expires_at <= ?' => gmdate('Y-m-d H:i:s')]
                 );
                 if ($extended) {
@@ -317,15 +362,16 @@ class GiftCards
             $delta = isset($data['balance']) ? round((float) $data['balance'] - (float) $card['balance'], 4) : 0.0;
             $active = isset($data['is_active']) ? (int) $data['is_active'] : (int) $card['is_active'];
             $expires = array_key_exists('expires_at', $data) ? $data['expires_at'] : $card['expires_at'];
-            $connection->update(
-                $this->table(),
-                [
-                    'balance' => sprintf('%.4F', (float) $card['balance'] + $delta),
-                    'is_active' => $active,
-                    'expires_at' => $expires,
-                ],
-                ['giftcard_id = ?' => $id]
-            );
+            $set = [
+                'balance' => sprintf('%.4F', (float) $card['balance'] + $delta),
+                'is_active' => $active,
+                'expires_at' => $expires,
+            ];
+            if ($expires !== $card['expires_at']) {
+                // a new expiry date gets its own reminder
+                $set['reminded_at'] = null;
+            }
+            $connection->update($this->table(), $set, ['giftcard_id = ?' => $id]);
             $where = ['giftcard_id = ?' => $id];
             if ($delta != 0) {
                 $this->log($where, self::ADJUSTED, $delta, null, $adminUser);
@@ -469,6 +515,139 @@ class GiftCards
             );
         }
         $this->log(['giftcard_id = ?' => $id], self::SENT, 0.0, null, $adminUser, $email);
+    }
+
+    /**
+     * Cards whose expiry reminder is due, soonest expiry first, SEND_BATCH at most, with "reminder_email".
+     *
+     * Spendable, with a balance left, expiring within $days, not reminded yet, and someone to tell: the
+     * recipient of a gift once it was e-mailed to them, else the account that owns the card, else the guest who
+     * bought it, if it was never given away. The address of an order placed by an account is never used: core
+     * keeps it on the order once the account is deleted (it only empties sales_order.customer_id).
+     *
+     * @param int $days
+     * @return array<int, array<string, mixed>>
+     */
+    public function getExpiring(int $days): array
+    {
+        $connection = $this->resource->getConnection();
+        $email = 'CASE WHEN c.recipient_email IS NOT NULL THEN c.recipient_email'
+            . ' WHEN cu.email IS NOT NULL THEN cu.email'
+            . ' WHEN o.customer_is_guest = 1 AND c.sent_at IS NULL THEN o.customer_email END';
+        return $connection->fetchAll(
+            $connection->select()
+                ->from(['c' => $this->table()])
+                ->joinLeft(
+                    ['cu' => $this->resource->getTableName('customer_entity')],
+                    'cu.entity_id = c.customer_id',
+                    []
+                )
+                ->joinLeft(['o' => $this->resource->getTableName('sales_order')], 'o.entity_id = c.order_id', [])
+                ->columns(['reminder_email' => new Expression($email)])
+                ->where('c.is_active = 1')
+                ->where('c.balance > 0')
+                ->where('c.reminded_at IS NULL')
+                ->where('c.expires_at > ?', gmdate('Y-m-d H:i:s'))
+                ->where('c.expires_at <= ?', gmdate('Y-m-d H:i:s', time() + $days * 86400))
+                ->where('c.recipient_email IS NULL OR c.sent_at IS NOT NULL')
+                ->where($email . ' IS NOT NULL')
+                ->order('c.expires_at')
+                ->limit(self::SEND_BATCH)
+        );
+    }
+
+    /**
+     * Mark the expiry reminder of a card as sent, unless it already is: false tells the caller not to send it.
+     *
+     * Claimed before sending, so that two runs never send it twice; released by releaseReminder() on failure.
+     *
+     * @param int $id
+     */
+    public function claimReminder(int $id): bool
+    {
+        return (bool) $this->resource->getConnection()->update(
+            $this->table(),
+            ['reminded_at' => gmdate('Y-m-d H:i:s')],
+            ['giftcard_id = ?' => $id, 'reminded_at IS NULL']
+        );
+    }
+
+    /**
+     * Make the expiry reminder of a card due again, after its e-mail failed.
+     *
+     * @param int $id
+     */
+    public function releaseReminder(int $id): void
+    {
+        $this->resource->getConnection()->update(
+            $this->table(),
+            ['reminded_at' => null],
+            ['giftcard_id = ?' => $id]
+        );
+    }
+
+    /**
+     * Record in the history that the expiry reminder was e-mailed, without the address it went to.
+     *
+     * @param int $id
+     */
+    public function markReminded(int $id): void
+    {
+        $this->log(['giftcard_id = ?' => $id], self::REMINDED, 0.0);
+    }
+
+    /**
+     * Erase the personal data a deleted customer account leaves on the cards; balances and history stay.
+     *
+     * The cards the account owned lose their owner, and, once delivered, the recipient and sender names, the
+     * recipient e-mail and the message. Gifts the customer bought lose the sender name once delivered. A gift
+     * not e-mailed yet keeps what it needs to reach its recipient. The customer's e-mail address is removed
+     * from the history comments (codes e-mailed or reminded to it), and so is any address left in the reminder
+     * lines of its cards and of the gifts it bought, whatever address they hold. Balances, statuses, expiries,
+     * orders and history amounts are never touched: the money on a card stays spendable by whoever holds its code.
+     *
+     * Runs inside the customer delete transaction, before core empties sales_order.customer_id.
+     *
+     * @param int $customerId
+     * @param string $email
+     */
+    public function forgetCustomer(int $customerId, string $email): void
+    {
+        $connection = $this->resource->getConnection();
+        $delivered = 'recipient_email IS NULL OR sent_at IS NOT NULL';
+        $connection->beginTransaction();
+        try {
+            $connection->update(
+                $this->table(),
+                ['recipient_email' => null, 'recipient_name' => null, 'sender_name' => null, 'message' => null],
+                ['customer_id = ?' => $customerId, $delivered]
+            );
+            $orders = $connection->select()
+                ->from($this->resource->getTableName('sales_order'), 'entity_id')
+                ->where('customer_id = ?', $customerId);
+            $connection->update($this->table(), ['sender_name' => null], ['order_id IN (?)' => $orders, $delivered]);
+            $connection->update(
+                $this->resource->getTableName('mageos_giftcard_history'),
+                ['comment' => null],
+                [
+                    'action = ?' => self::REMINDED,
+                    'giftcard_id IN (?)' => $connection->select()->from($this->table(), 'giftcard_id')
+                        ->where('customer_id = ? OR order_id IN (' . $orders . ')', $customerId),
+                ]
+            );
+            $connection->update($this->table(), ['customer_id' => null], ['customer_id = ?' => $customerId]);
+            if ($email !== '') {
+                $connection->update(
+                    $this->resource->getTableName('mageos_giftcard_history'),
+                    ['comment' => null],
+                    ['comment = ?' => $email, 'action IN (?)' => [self::SENT, self::REMINDED]]
+                );
+            }
+            $connection->commit();
+        } catch (\Throwable $e) {
+            $connection->rollBack();
+            throw $e;
+        }
     }
 
     /**
