@@ -2,7 +2,9 @@
 
 All notable changes to this module are documented here. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and versions follow [Semantic Versioning](https://semver.org/).
 
-## [Unreleased]
+## [2.2.0] - 2026-11-28
+
+Gift cards can be created in bulk, their holders are reminded before they expire, and a deleted customer's personal data is erased from them.
 
 Upgrade: the update adds a column and an index to `mageos_giftcard`. Magento's cron must run for the new expiry reminder job, which does nothing until *Expiry Reminder (Days Before)* is set. Customer accounts deleted from now on have their personal data erased from their gift cards (see *Changed*).
 
